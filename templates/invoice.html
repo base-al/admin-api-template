@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="sq">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faturë - {{.Invoice.InvoiceNumber}}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+
+            color: #2c3e50;
+            font-size: 12px;
+            line-height: 1.5;
+            background: #ffffff;
+        }
+
+        /* A4 optimized container - 100% width */
+        .invoice-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            overflow: hidden;
+        }
+
+        /* A4 optimized header */
+        .invoice-header {
+           
+
+            color: #2c3e50;
+            padding: 15mm 10mm;
+            margin: 0;
+        }
+
+        .company-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4mm;
+        }
+
+        .company-logo {
+            flex-shrink: 0;
+        }
+
+        .company-logo img {
+            width: 57mm;
+            height: auto;
+            max-height: 18mm;
+        }
+
+        .company-details-wrapper {
+            flex: 1;
+        }
+
+        .company-name {
+            font-size: 18px;
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 3mm;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .company-details {
+            font-size: 11px;
+            line-height: 1.4;
+            font-weight: bolder;
+            padding-left: 17mm;
+        }
+
+        .invoice-title {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 5mm;
+        }
+
+        .invoice-title h1 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 800;
+
+            letter-spacing: 0.5px;
+        }
+
+        .invoice-number {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 2mm;
+            font-weight: 500;
+        }
+
+        /* A4 optimized content area */
+        .invoice-content {
+            padding: 10mm;
+            margin-left: 17mm;
+        }
+
+        .invoice-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8mm;
+        }
+
+        .customer-info,
+        .invoice-info {
+            width: 50%;
+            vertical-align: top;
+            background: #fafafa;
+            padding: 5mm;
+            border-radius: 3mm;
+            border: 1px solid #e5e7eb;
+        }
+
+        .customer-info {
+            border-right: 2.5mm solid white;
+        }
+
+        .invoice-info {
+            border-left: 2.5mm solid white;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #f7a054;
+            border-bottom: 2px solid #f7a054;
+            padding-bottom: 2mm;
+            margin-bottom: 4mm;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8mm 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 3mm;
+            overflow: hidden;
+            padding-left: 17mm;
+        }
+
+        .services-table th,
+        .services-table td {
+            padding: 4mm;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .services-table th {
+            background: #f7a054;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .services-table td.label {
+            text-align: right;
+            font-weight: 600;
+            color: #1f2937;
+            min-width: 120px;
+           
+        }
+
+        .services-table .amount-cell {
+            text-align: right;
+            font-weight: 600;
+            color: #f7a054;
+            font-size: 16px;
+        }
+
+        .totals-section {
+            margin-top: 6mm;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .totals-table {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 3mm;
+            overflow: hidden;
+        }
+
+        .totals-table td {
+            padding: 3mm 5mm;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .totals-table .label {
+            font-weight: 600;
+            text-align: right;
+            color: #FFF;
+            width: 200px;
+        }
+        .services-table td.amount {
+            text-align: right;
+            font-weight: 600;
+            color: #1f2937;
+            min-width: 120px;
+           
+        }
+        .totals-table td.amount {
+            text-align: right;
+            font-weight: 600;
+            color: #FFF;
+            min-width: 120px;
+           
+        }
+
+        .total-final {
+            background: #f7a054;
+            color: white;
+        }
+
+        .total-final .label,
+        .total-final .amount {
+            color: white;
+            font-size: 16px;
+            text-align: right;
+            font-weight: 700;
+        }
+
+        .vat-info {
+            background: #fef3f2;
+            padding: 5mm;
+            border-left: 1mm solid #f7a054;
+            margin: 6mm 0;
+            border-radius: 0 3mm 3mm 0;
+            font-size: 11px;
+            color: #7c2d12;
+        }
+
+        .payment-info {
+            background: #fef3f2;
+            border: 1px solid #fed7d7;
+            padding: 5mm;
+            margin-top: 6mm;
+            border-radius: 3mm;
+            border-left: 1mm solid #f7a054;
+            color: #7c2d12;
+        }
+
+        .payment-info strong {
+            color: #f7a054;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 8mm;
+            border-top: 2px solid #f7a054;
+            padding: 5mm 10mm;
+            font-size: 10px;
+            color: #6b7280;
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: relative;
+        }
+
+        .footer-content {
+            flex: 1;
+            text-align: left;
+        }
+
+        .footer-content p {
+            margin: 2mm 0;
+        }
+
+        .footer-content em {
+            color: #9ca3af;
+            font-size: 9px;
+        }
+
+        .footer-icon {
+            flex-shrink: 0;
+            opacity: 0.1;
+            margin-left: 5mm;
+        }
+
+        .footer-icon svg {
+            width: 15mm;
+            height: 15mm;
+        }
+
+        .date-format {
+            color: #374151;
+            font-weight: 500;
+        }
+
+        /* Enhanced typography */
+        strong {
+            color: #1f2937;
+        }
+
+        .customer-info strong,
+        .invoice-info strong {
+            color: #f7a054;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-container">
+        <table class="invoice-header" style="width: 100%;">
+            <tr>
+
+                <td>
+                    <div class="company-info">
+                        <div class="company-logo">
+                            <img src="/Users/flakerimismani/Negenet/Admin/admin-api/templates/assets/logo.png"
+                                alt="Logo">
+                        </div>
+                        <div class="company-details">
+                            {{.Company.Address}}<br>
+                            Telefon: {{.Company.Phone}}<br>
+                            Email: {{.Company.Email}}<br>
+                            NUI: {{.Company.NUI}}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="invoice-title">
+                        <h1>FATURË</h1>
+                        {{.Invoice.InvoiceNumber}}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="invoice-content">
+            <table class="invoice-details-table">
+                <tr>
+                    <td class="customer-info">
+                        <div class="info-title">FATURUAR PËR:</div>
+                        <strong>{{.CustomerName}}</strong><br>
+                        {{.CustomerAddress}}<br>
+                        {{if .Order.BusinessCustomer}}
+                        NUI: {{.Order.BusinessCustomer.UIN}}
+                        {{end}}
+                    </td>
+                    <td class="invoice-info">
+                        <div class="info-title">DETAJET E FATURËS:</div>
+                        <strong>Data e lëshimit:</strong> <span class="date-format">{{.Invoice.IssuedDate.Format
+                            "02/01/2006"}}</span><br>
+                        <strong>Data e duhur për pagesë:</strong> <span class="date-format">{{.Invoice.DueDate.Format
+                            "02/01/2006"}}</span><br>
+                        <strong>Statusi:</strong> {{.Invoice.Status}}<br>
+                        <strong>Porosia Nr:</strong> {{.Order.Id}}
+                    </td>
+                </tr>
+            </table>
+
+            <table class="services-table">
+                <thead>
+                    <tr>
+                        <th>Përshkrimi i Shërbimit</th>
+                        <th>Periudhа</th>
+                        <th>Çmimi (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>{{.Order.Plan.Name}}</strong><br>
+                            <small>Shpejtësia: ⬇️ {{.Order.Plan.SpeedDownMbps}} Mbps / ⬆️ {{.Order.Plan.SpeedUpMbps}}
+                                Mbps</small>
+                        </td>
+                        <td>
+                            {{.Order.PeriodStart.Format "02/01/2006"}} - {{.Order.PeriodEnd.Format "02/01/2006"}}
+                        </td>
+                        <td class="amount-cell">€{{printf "%.2f" (div .BaseAmount 100)}}</td>
+                    </tr>
+
+                    <tr class="total-table" >
+                        <td>        </td>
+                        <td class="label">Shuma bazë (pa TVSH):</td>
+                        <td class="amount">€{{printf "%.2f" (div .BaseAmount 100)}}</td>
+                    </tr>
+                    <tr class="total-table">
+                        <td>        </td>
+                        <td class="label">TVSH ({{printf "%.0f" .VATRate}}%):</td>
+                        <td class="amount">€{{printf "%.2f" (div .VATAmount 100)}}</td>
+                    </tr>
+                    <tr class="total-table">
+                        <td>        </td>
+                        <td class="label">TOTALI për pagesë:</td>
+                        <td class="amount">€{{printf "%.2f" (div .Invoice.Amount 100)}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        
+        <table class="vat-info" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td
+                    style="background: #fef3f2; padding: 5mm; border-left: 1mm solid #f7a054; border-radius: 0 3mm 3mm 0; font-size: 11px; color: #7c2d12;">
+                    <strong>Informata mbi TVSH-në:</strong><br>
+                    Kjo faturë përfshin Taksën mbi Vlerën e Shtuar (TVSH) sipas ligjeve të Kosovës.
+                    Norma e TVSH-së: {{printf "%.0f" .VATRate}}%
+                </td>
+            </tr>
+        </table>
+
+
+
+        <table class="payment-info" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td
+                    style="background: #fef3f2; border: 1px solid #fed7d7; padding: 5mm; border-radius: 3mm; border-left: 1mm solid #f7a054; color: #7c2d12;">
+                    <strong style="color: #f7a054; font-size: 14px;">Informata për pagesë:</strong><br>
+                    {{if .Order.BusinessCustomer}}
+                    Klientët biznes mund të paguajnë brenda 30 ditëve nga data e lëshimit të faturës.
+                    {{else}}
+                    Klientët rezidencial duhet të paguajnë përpara aktivizimit të shërbimit.
+                    {{end}}<br>
+                    Për pyetje, na kontaktoni në {{.Company.Phone}} ose {{.Company.Email}}.
+                </td>
+            </tr>
+        </table>
+
+        <table class="footer"
+            style="width: 100%; margin-top: 8mm; border-top: 2px solid #f7a054; padding: 5mm 10mm; font-size: 10px; color: #6b7280; background: #fafafa; border-collapse: collapse;">
+            <tr>
+                <td style="text-align: left; vertical-align: bottom;">
+                    <p style="margin: 2mm 0;">Faleminderit që zgjodhët {{.Company.Name}} për shërbimet tuaja të
+                        internetit!</p>
+                    <p style="margin: 2mm 0;"><em style="color: #9ca3af; font-size: 9px;">Kjo faturë është gjeneruar
+                            elektronikisht dhe është e vlefshme pa nënshkrimin fizik.</em></p>
+                    <p style="margin: 2mm 0;">{{.Company.Name}} - Prishtinë, Kosovë | {{.Company.Phone}} |
+                        {{.Company.Email}}</p>
+                </td>
+                <td style="text-align: right; vertical-align: bottom; width: 5mm;">
+                    <img src="/Users/flakerimismani/Negenet/Admin/admin-api/templates/assets/icon.png"
+                        style="opacity: 0.4;" width="35mm" height="35mm" alt="Logo">
+                </td>
+            </tr>
+        </table>
+    </div>
+ 
+    </div> <!-- Close invoice-container -->
+</body>
+
+</html>

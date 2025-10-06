@@ -1,0 +1,90 @@
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:119[0m  🚀 Starting Base Framework  {"version": "1.0.0", "environment": "debug"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:135[0m  ✅ Database initialized
+Initializing email sender with provider: smtp
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:173[0m  ✅ Infrastructure initialized
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:240[0m  ✅ WebSocket hub initialized
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:184[0m  ✅ Router initialized
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:31[0m  🏗️  Starting core modules initialization
+2025/09/15 17:38:03 Loading OAuth configuration
+2025/09/15 17:38:03 OAuth configuration loaded successfully
+2025/09/15 17:38:03 Validating OAuth configuration
+2025/09/15 17:38:03 Warning: No OAuth providers configured. OAuth functionality will be disabled.
+2025/09/15 17:38:03 OAuth configuration validated successfully
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "users"}
+Successfully registered module: users
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "users"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "media"}
+Successfully registered module: media
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmedia/module.go:46[0m  Registering media module routes
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmedia/module.go:48[0m  Media module routes registered
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "media"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "authentication"}
+Successfully registered module: authentication
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "authentication"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "oauth"}
+Successfully registered module: oauth
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "oauth"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "authorization"}
+Successfully registered module: authorization
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mauthorization/module.go:37[0m  Registering authorization module routes
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mauthorization/controller.go:28[0m  Setting up authorization routes
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mauthorization/controller.go:31[0m  Registering authorization role management routes
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mauthorization/controller.go:59[0m  Authorization routes registered successfully
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mauthorization/module.go:39[0m  Authorization module routes registered successfully
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "authorization"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "translation"}
+Successfully registered module: translation
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mtranslation/module.go:38[0m  Registering Translation module routes
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mtranslation/module.go:40[0m  Translation module routes registered
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "translation"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:53[0m  Initializing core module  {"module": "scheduler"}
+Successfully registered module: scheduler
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:89[0m  Core module initialized successfully  {"module": "scheduler"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/core.go:44[0m  ✅ Core modules initialization complete (7 modules)
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:292[0m  ✅ Core modules registered  {"count": 7}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:266[0m  ✅ Authorization service middleware injected globally
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:320[0m  ✅ App modules loaded  {"count": 10}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "employees"}
+Successfully registered module: employees
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "employees"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "plans"}
+Successfully registered module: plans
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "plans"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "payments"}
+Successfully registered module: payments
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "payments"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "grace_periods"}
+Successfully registered module: grace_periods
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "grace_periods"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "notifications"}
+Successfully registered module: notifications
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "notifications"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "business_customers"}
+Successfully registered module: business_customers
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "business_customers"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "customers"}
+Successfully registered module: customers
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "customers"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "orders"}
+Successfully registered module: orders
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "orders"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "invoices"}
+Successfully registered module: invoices
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "invoices"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:42[0m  Initializing module  {"module": "settings"}
+Successfully registered module: settings
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2mmodule/initializer.go:78[0m  Module initialized successfully  {"module": "settings"}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:329[0m  ✅ Module initialization complete  {"total": 10, "initialized": 10}
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:248[0m  ✅ Modules auto-discovered and registered
+
+🎉 Base Framework Ready!
+
+📍 Server URLs:
+   • Local:   http://localhost:8200
+   • Network: http://192.168.1.7:8200
+
+📚 Documentation:
+   • Swagger: http://localhost:8200/docs/index.html
+
+[36m2025-09-15 17:38:03[0m  [34mℹ️  INFO [0m  [2madmin-api/main.go:399[0m  🌐 Server starting  {"port": ":8200"}
+signal: terminated
