@@ -66,9 +66,9 @@ func NewActiveStorage(db *gorm.DB, config Config) (*ActiveStorage, error) {
 		provider:       provider,
 		defaultPath:    storagePath,
 		configs:        make(map[string]map[string]AttachmentConfig),
-		imageProcessor: NewImageProcessor(85),  // 85% quality for WebP (will be overridden by settings)
-		videoConverter: NewVideoConverter(23),  // CRF 23 for WebM (will be overridden by settings)
-		audioConverter: NewAudioConverter(96),  // 96 kbps for audio (will be overridden by settings)
+		imageProcessor: NewImageProcessor(85), // 85% quality for WebP (will be overridden by settings)
+		videoConverter: NewVideoConverter(23), // CRF 23 for WebM (will be overridden by settings)
+		audioConverter: NewAudioConverter(96), // 96 kbps for audio (will be overridden by settings)
 	}
 
 	// Auto-migrate the Attachment model
@@ -102,6 +102,7 @@ func (as *ActiveStorage) Attach(model Attachable, field string, file *multipart.
 	convertImages := as.getSettingBool("media_convert_images", true)
 	convertVideos := as.getSettingBool("media_convert_videos", true)
 	convertAudio := as.getSettingBool("media_convert_audio", true)
+	keepOriginal := as.getSettingBool("media_keep_original", false)
 
 	// Try to convert images to WebP (if enabled)
 	var convertedData []byte
@@ -109,7 +110,8 @@ func (as *ActiveStorage) Attach(model Attachable, field string, file *multipart.
 	if convertImages && as.imageProcessor != nil {
 		convertedData, convertedFilename, err = as.imageProcessor.ConvertToWebP(file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert image to webp: %w", err)
+			// If conversion fails, just use original file
+			convertedData = nil
 		}
 	}
 
@@ -117,7 +119,8 @@ func (as *ActiveStorage) Attach(model Attachable, field string, file *multipart.
 	if convertedData == nil && convertVideos && as.videoConverter != nil {
 		convertedData, convertedFilename, err = as.videoConverter.ConvertToWebM(file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert video to webm: %w", err)
+			// If conversion fails, just use original file
+			convertedData = nil
 		}
 	}
 
@@ -125,7 +128,22 @@ func (as *ActiveStorage) Attach(model Attachable, field string, file *multipart.
 	if convertedData == nil && convertAudio && as.audioConverter != nil {
 		convertedData, convertedFilename, err = as.audioConverter.ConvertToOpus(file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert audio to opus: %w", err)
+			// If conversion fails, just use original file
+			convertedData = nil
+		}
+	}
+
+	// If file was converted and keep original is enabled, upload original too
+	if convertedData != nil && keepOriginal {
+		originalPath := filepath.Join(config.Path, model.GetModelName(), field, "originals")
+		_, err = as.provider.Upload(file, UploadConfig{
+			AllowedExtensions: config.AllowedExtensions,
+			MaxFileSize:       config.MaxFileSize,
+			UploadPath:        originalPath,
+		})
+		if err != nil {
+			// Log error but don't fail the main upload
+			// Original file upload is optional
 		}
 	}
 
@@ -246,16 +264,4 @@ func (as *ActiveStorage) getSettingBool(key string, defaultValue bool) bool {
 		return defaultValue
 	}
 	return setting.ValueBool
-}
-
-// getSettingInt retrieves an integer setting from the database
-func (as *ActiveStorage) getSettingInt(key string, defaultValue int) int {
-	type Settings struct {
-		ValueInt int `gorm:"column:value_int"`
-	}
-	var setting Settings
-	if err := as.db.Table("settings").Select("value_int").Where("setting_key = ?", key).First(&setting).Error; err != nil {
-		return defaultValue
-	}
-	return setting.ValueInt
 }

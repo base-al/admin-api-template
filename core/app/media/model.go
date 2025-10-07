@@ -11,16 +11,17 @@ import (
 
 // Media represents a media entity
 type Media struct {
-	Id          uint                `json:"id" gorm:"primaryKey"`
-	Name        string              `json:"name" gorm:"column:name"`
-	Type        string              `json:"type" gorm:"column:type"`
-	Description string              `json:"description" gorm:"column:description"`
-	ParentId    *uint               `json:"parent_id" gorm:"column:parent_id;index"`   // Reference to parent folder
-	Folder      string              `json:"folder" gorm:"column:folder;index"`         // Computed full path for compatibility
-	Tags        string              `json:"tags" gorm:"column:tags"`                   // Comma-separated tags for searching
-	Metadata    *string             `json:"metadata" gorm:"column:metadata;type:json"` // JSON metadata for extra properties (nullable)
-	AuthorId    *uint               `json:"author_id" gorm:"column:author_id;index"`   // Optional author ownership
-	File        *storage.Attachment `json:"file,omitempty" gorm:"polymorphic:Model"`
+	Id           uint                `json:"id" gorm:"primaryKey"`
+	Name         string              `json:"name" gorm:"column:name"`
+	Type         string              `json:"type" gorm:"column:type"`
+	Description  string              `json:"description" gorm:"column:description"`
+	ParentId     *uint               `json:"parent_id" gorm:"column:parent_id;index"`   // Reference to parent folder
+	Folder       string              `json:"folder" gorm:"column:folder;index"`         // Computed full path for compatibility
+	Tags         string              `json:"tags" gorm:"column:tags"`                   // Comma-separated tags for searching
+	Metadata     *string             `json:"metadata" gorm:"column:metadata;type:json"` // JSON metadata for extra properties (nullable)
+	AuthorId     *uint               `json:"author_id" gorm:"column:author_id;index"`   // Optional author ownership
+	File         *storage.Attachment `json:"file,omitempty" gorm:"polymorphic:Model;polymorphicValue:file"`
+	OriginalFile *storage.Attachment `json:"original_file,omitempty" gorm:"polymorphic:Model;polymorphicValue:original_file"`
 
 	// Conversion tracking
 	OriginalFormat  string `json:"original_format,omitempty" gorm:"column:original_format"`   // Format before conversion (mp4, png, mp3)
@@ -52,41 +53,43 @@ func (item *Media) GetModelName() string {
 
 // Preload preloads all the model's relationships
 func (item *Media) Preload(db *gorm.DB) *gorm.DB {
-	return db.Preload("File").Preload("Parent").Preload("Children")
+	return db.Preload("File").Preload("OriginalFile").Preload("Parent").Preload("Children")
 }
 
 // MediaListResponse represents the list view response
 type MediaListResponse struct {
-	Id          uint                `json:"id"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
-	Name        string              `json:"name"`
-	Type        string              `json:"type"`
-	Description string              `json:"description"`
-	ParentId    *uint               `json:"parent_id"`
-	Folder      string              `json:"folder"`
-	Tags        string              `json:"tags"`
-	AuthorId    *uint               `json:"author_id"`
-	File        *storage.Attachment `json:"file,omitempty"`
+	Id           uint                `json:"id"`
+	CreatedAt    time.Time           `json:"created_at"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	Name         string              `json:"name"`
+	Type         string              `json:"type"`
+	Description  string              `json:"description"`
+	ParentId     *uint               `json:"parent_id"`
+	Folder       string              `json:"folder"`
+	Tags         string              `json:"tags"`
+	AuthorId     *uint               `json:"author_id"`
+	File         *storage.Attachment `json:"file,omitempty"`
+	OriginalFile *storage.Attachment `json:"original_file,omitempty"`
 }
 
 // MediaResponse represents the detailed view response
 type MediaResponse struct {
-	Id          uint                `json:"id"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt      `json:"deleted_at,omitempty"`
-	Name        string              `json:"name"`
-	Type        string              `json:"type"`
-	Description string              `json:"description"`
-	ParentId    *uint               `json:"parent_id"`
-	Folder      string              `json:"folder"`
-	Tags        string              `json:"tags"`
-	Metadata    *string             `json:"metadata"`
-	AuthorId    *uint               `json:"author_id"`
-	File        *storage.Attachment `json:"file,omitempty"`
-	Parent      *Media              `json:"parent,omitempty"`
-	Children    []*Media            `json:"children,omitempty"`
+	Id           uint                `json:"id"`
+	CreatedAt    time.Time           `json:"created_at"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt      `json:"deleted_at,omitempty"`
+	Name         string              `json:"name"`
+	Type         string              `json:"type"`
+	Description  string              `json:"description"`
+	ParentId     *uint               `json:"parent_id"`
+	Folder       string              `json:"folder"`
+	Tags         string              `json:"tags"`
+	Metadata     *string             `json:"metadata"`
+	AuthorId     *uint               `json:"author_id"`
+	File         *storage.Attachment `json:"file,omitempty"`
+	OriginalFile *storage.Attachment `json:"original_file,omitempty"`
+	Parent       *Media              `json:"parent,omitempty"`
+	Children     []*Media            `json:"children,omitempty"`
 }
 
 // MediaResponse represents the detailed view response
@@ -106,11 +109,11 @@ type CreateMediaRequest struct {
 	Name        string                `form:"name" json:"name" binding:"required"`
 	Type        string                `form:"type" json:"type" binding:"required"`
 	Description string                `form:"description" json:"description"`
-	ParentId    *uint                 `json:"parent_id"`                      // For JSON requests
-	Folder      string                `form:"folder" json:"folder"`           // Optional folder path (for compatibility)
-	Tags        string                `form:"tags" json:"tags"`               // Optional comma-separated tags
-	Metadata    string                `form:"metadata" json:"metadata"`       // Optional JSON metadata
-	AuthorId    *uint                 `json:"author_id"`                      // For JSON requests
+	ParentId    *uint                 `json:"parent_id"`                // For JSON requests
+	Folder      string                `form:"folder" json:"folder"`     // Optional folder path (for compatibility)
+	Tags        string                `form:"tags" json:"tags"`         // Optional comma-separated tags
+	Metadata    string                `form:"metadata" json:"metadata"` // Optional JSON metadata
+	AuthorId    *uint                 `json:"author_id"`                // For JSON requests
 	File        *multipart.FileHeader `form:"file"`
 }
 
@@ -130,38 +133,40 @@ type UpdateMediaRequest struct {
 // ToListResponse converts the model to a list response
 func (item *Media) ToListResponse() *MediaListResponse {
 	return &MediaListResponse{
-		Id:          item.Id,
-		CreatedAt:   item.CreatedAt,
-		UpdatedAt:   item.UpdatedAt,
-		Name:        item.Name,
-		Type:        item.Type,
-		Description: item.Description,
-		ParentId:    item.ParentId,
-		Folder:      item.Folder,
-		Tags:        item.Tags,
-		AuthorId:    item.AuthorId,
-		File:        item.File,
+		Id:           item.Id,
+		CreatedAt:    item.CreatedAt,
+		UpdatedAt:    item.UpdatedAt,
+		Name:         item.Name,
+		Type:         item.Type,
+		Description:  item.Description,
+		ParentId:     item.ParentId,
+		Folder:       item.Folder,
+		Tags:         item.Tags,
+		AuthorId:     item.AuthorId,
+		File:         item.File,
+		OriginalFile: item.OriginalFile,
 	}
 }
 
 // ToResponse converts the model to a detailed response
 func (item *Media) ToResponse() *MediaResponse {
 	return &MediaResponse{
-		Id:          item.Id,
-		CreatedAt:   item.CreatedAt,
-		UpdatedAt:   item.UpdatedAt,
-		DeletedAt:   item.DeletedAt,
-		Name:        item.Name,
-		Type:        item.Type,
-		Description: item.Description,
-		ParentId:    item.ParentId,
-		Folder:      item.Folder,
-		Tags:        item.Tags,
-		Metadata:    item.Metadata,
-		AuthorId:    item.AuthorId,
-		File:        item.File,
-		Parent:      item.Parent,
-		Children:    item.Children,
+		Id:           item.Id,
+		CreatedAt:    item.CreatedAt,
+		UpdatedAt:    item.UpdatedAt,
+		DeletedAt:    item.DeletedAt,
+		Name:         item.Name,
+		Type:         item.Type,
+		Description:  item.Description,
+		ParentId:     item.ParentId,
+		Folder:       item.Folder,
+		Tags:         item.Tags,
+		Metadata:     item.Metadata,
+		AuthorId:     item.AuthorId,
+		File:         item.File,
+		OriginalFile: item.OriginalFile,
+		Parent:       item.Parent,
+		Children:     item.Children,
 	}
 }
 

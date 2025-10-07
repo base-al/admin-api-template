@@ -24,12 +24,21 @@ type MediaService struct {
 
 func NewMediaService(db *gorm.DB, emitter *emitter.Emitter, activeStorage *storage.ActiveStorage, logger logger.Logger) *MediaService {
 	// Register file attachment configuration
-	// Note: Images (jpg, jpeg, png) will be auto-converted to webp
+	// Note: Images (jpg, jpeg, png, heic, heif) will be auto-converted to webp
 	// Videos (mp4, mov, avi, etc.) will be auto-converted to webm
 	activeStorage.RegisterAttachment("media", storage.AttachmentConfig{
 		Field:             "file",
 		Path:              "media/files",
-		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav", ".ogg"},
+		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav", ".ogg", ".opus"},
+		MaxFileSize:       100 << 20, // 100MB
+		Multiple:          false,
+	})
+
+	// Register original_file attachment configuration (for keeping originals)
+	activeStorage.RegisterAttachment("media", storage.AttachmentConfig{
+		Field:             "original_file",
+		Path:              "media/files/originals",
+		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav", ".ogg", ".opus"},
 		MaxFileSize:       100 << 20, // 100MB
 		Multiple:          false,
 	})

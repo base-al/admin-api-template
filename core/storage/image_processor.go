@@ -13,6 +13,9 @@ import (
 
 	"github.com/kolesa-team/go-webp/encoder"
 	"github.com/kolesa-team/go-webp/webp"
+	_ "github.com/adrium/goheif"
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/tiff"
 )
 
 // ImageProcessor handles image conversion operations
@@ -33,7 +36,7 @@ func NewImageProcessor(quality int) *ImageProcessor {
 // IsImageFile checks if the file is a supported image type
 func (ip *ImageProcessor) IsImageFile(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
-	supportedExts := []string{".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
+	supportedExts := []string{".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif"}
 	for _, supported := range supportedExts {
 		if ext == supported {
 			return true
@@ -102,8 +105,15 @@ func (ip *ImageProcessor) decodeImage(r io.Reader, filename string) (image.Image
 		return png.Decode(r)
 	case ".webp":
 		return webp.Decode(r, nil)
+	case ".heic", ".heif":
+		// Use generic decoder which supports HEIC/HEIF via registered formats
+		img, _, err := image.Decode(r)
+		if err != nil {
+			return nil, fmt.Errorf("HEIC/HEIF decoding failed: %w (ensure libheif is installed)", err)
+		}
+		return img, nil
 	default:
-		// Try generic decode
+		// Try generic decode for other formats (bmp, tiff, etc.)
 		img, _, err := image.Decode(r)
 		return img, err
 	}

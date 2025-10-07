@@ -2,25 +2,26 @@ package router
 
 import (
 	"net/http"
-	"path"
 	"strings"
 	"sync"
 )
 
 // Router is a lightweight HTTP router with middleware support
 type Router struct {
-	trees      map[string]*node // HTTP method -> route tree
-	middleware []MiddlewareFunc
-	notFound   HandlerFunc
-	pool       sync.Pool
-	mu         sync.RWMutex
+	trees        map[string]*node // HTTP method -> route tree
+	middleware   []MiddlewareFunc
+	staticRoutes map[string]http.Handler // Static file routes (bypass middleware)
+	notFound     HandlerFunc
+	pool         sync.Pool
+	mu           sync.RWMutex
 }
 
 // New creates a new router
 func New() *Router {
 	r := &Router{
-		trees:    make(map[string]*node),
-		notFound: defaultNotFound,
+		trees:        make(map[string]*node),
+		staticRoutes: make(map[string]http.Handler),
+		notFound:     defaultNotFound,
 	}
 	r.pool.New = func() any {
 		return &Context{
@@ -28,8 +29,8 @@ func New() *Router {
 			keys:   make(map[string]any),
 		}
 	}
-	
-	
+
+
 	return r
 }
 
@@ -117,6 +118,18 @@ func (r *Router) Group(prefix string, middleware ...MiddlewareFunc) *RouterGroup
 
 // ServeHTTP implements http.Handler interface
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Check static routes first (bypass middleware)
+	r.mu.RLock()
+	for prefix, handler := range r.staticRoutes {
+		if strings.HasPrefix(req.URL.Path, prefix) {
+			r.mu.RUnlock()
+			handler.ServeHTTP(w, req)
+			return
+		}
+	}
+	r.mu.RUnlock()
+
+	// Handle regular routes with middleware
 	c := r.pool.Get().(*Context)
 	c.reset(w, req)
 	defer r.pool.Put(c)
@@ -170,25 +183,12 @@ func (r *Router) Static(prefix, root string) {
 		prefix = "/" + prefix
 	}
 
-	handler := func(c *Context) error {
-		reqPath := c.Request.URL.Path
+	// Use http.FileServer to serve static files (bypasses middleware)
+	fileServer := http.StripPrefix(prefix, http.FileServer(http.Dir(root)))
 
-		// Remove the prefix
-		file := strings.TrimPrefix(reqPath, prefix)
-		file = strings.TrimPrefix(file, "/") // clean leading slash
-
-		if file == "" || strings.HasSuffix(reqPath, "/") {
-			file = "index.html"
-		}
-
-		fullPath := path.Join(root, file)
-		http.ServeFile(c.Writer, c.Request, fullPath)
-		return nil
-	}
-
-	// register route with wildcard
-	r.GET(prefix+"/*filepath", handler)
-	r.GET(prefix, handler) // also serve the exact prefix URL
+	r.mu.Lock()
+	r.staticRoutes[prefix] = fileServer
+	r.mu.Unlock()
 }
 
 // defaultNotFound is the default 404 handler

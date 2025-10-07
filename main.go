@@ -26,12 +26,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// @title Base API
-// @description This is the API documentation for Base
-// @termsOfService https://example.com/terms
-// @contact.name Base Team
-// @contact.email info@example.com
-// @contact.url https://example.com
+// @title Shop API
+// @description This is the API documentation for Shop
+// @termsOfService https://shop.com/terms
+// @contact.name Shop Team
+// @contact.email info@shop.com
+// @contact.url https://shop.com
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 // @version 2.0.0
