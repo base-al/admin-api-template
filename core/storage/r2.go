@@ -1,14 +1,16 @@
 package storage
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"mime/multipart"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // R2Config holds configuration for Cloudflare R2 storage
@@ -22,32 +24,42 @@ type R2Config struct {
 }
 
 type r2Provider struct {
-	client   *s3.S3
+	client   *s3.Client
 	bucket   string
 	endpoint string
 	baseURL  string
 	cdn      string
 }
 
+// R2Provider is the exported type for type assertions
+type R2Provider = r2Provider
+
+// GetClient returns the S3 client (for internal use like syncing)
+func (p *r2Provider) GetClient() *s3.Client {
+	return p.client
+}
+
 func NewR2Provider(config R2Config) (Provider, error) {
 	// R2 endpoint format: https://<account_id>.r2.cloudflarestorage.com
 	endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", config.AccountID)
 
-	sess, err := session.NewSession(&aws.Config{
-		Credentials:      credentials.NewStaticCredentials(config.AccessKeyID, config.AccessKeySecret, ""),
-		Endpoint:         aws.String(endpoint),
-		Region:           aws.String("auto"), // R2 uses 'auto' as region
-		S3ForcePathStyle: aws.Bool(false),    // R2 requires this to be false
-	})
+	// Load AWS config with custom resolver
+	cfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			config.AccessKeyID,
+			config.AccessKeySecret,
+			"",
+		)),
+		awsconfig.WithRegion("auto"),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create R2 session: %w", err)
+		return nil, fmt.Errorf("failed to create R2 config: %w", err)
 	}
 
-	// Create S3 client with the correct API version
-	s3Config := &aws.Config{
-		S3ForcePathStyle: aws.Bool(false),
-	}
-	client := s3.New(sess, s3Config)
+	// Create S3 client with path-style addressing
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
 
 	return &r2Provider{
 		client:   client,
@@ -71,7 +83,7 @@ func (p *r2Provider) Upload(file *multipart.FileHeader, config UploadConfig) (*U
 	key := fmt.Sprintf("%s/%s", config.UploadPath, filename)
 
 	// Upload to R2
-	_, err = p.client.PutObject(&s3.PutObjectInput{
+	_, err = p.client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(p.bucket),
 		Key:         aws.String(key),
 		Body:        src,
@@ -89,8 +101,39 @@ func (p *r2Provider) Upload(file *multipart.FileHeader, config UploadConfig) (*U
 	}, nil
 }
 
+func (p *r2Provider) UploadBytes(data []byte, filename string, config UploadConfig) (*UploadResult, error) {
+	// Generate unique filename
+	uniqueFilename := generateUniqueFilename(filename)
+	key := fmt.Sprintf("%s/%s", config.UploadPath, uniqueFilename)
+
+	// Detect content type from filename
+	contentType := "application/octet-stream"
+	if strings.HasSuffix(strings.ToLower(filename), ".webp") {
+		contentType = "image/webp"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".webm") {
+		contentType = "video/webm"
+	}
+
+	// Upload to R2
+	_, err := p.client.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:      aws.String(p.bucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(data),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload to R2: %w", err)
+	}
+
+	return &UploadResult{
+		Filename: uniqueFilename,
+		Path:     key,
+		Size:     int64(len(data)),
+	}, nil
+}
+
 func (p *r2Provider) Delete(path string) error {
-	_, err := p.client.DeleteObject(&s3.DeleteObjectInput{
+	_, err := p.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(path),
 	})

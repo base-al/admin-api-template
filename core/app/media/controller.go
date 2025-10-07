@@ -2,7 +2,9 @@ package media
 
 import (
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"base/core/logger"
 	"base/core/router"
@@ -30,6 +32,7 @@ func (c *MediaController) Routes(router *router.RouterGroup) {
 
 	// Specific endpoints (must come before :id routes)
 	router.GET("/media/all", c.ListAll) // Unpaginated list
+	router.POST("/media/sync", c.SyncFromR2) // Sync from R2 bucket
 
 	// Parameterized routes (must come last)
 	router.GET("/media/:id", c.Get)
@@ -57,14 +60,51 @@ func (c *MediaController) Routes(router *router.RouterGroup) {
 // @Security BearerAuth
 func (c *MediaController) Create(ctx *router.Context) error {
 	var req CreateMediaRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+
+	contentType := ctx.Request.Header.Get("Content-Type")
+
+	// Try to parse as JSON first, fall back to form data
+	if strings.Contains(contentType, "application/json") {
+		// Parse JSON request
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		}
+	} else {
+		// Parse multipart form first
+		if parseErr := ctx.Request.ParseMultipartForm(32 << 20); parseErr != nil {
+			return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: parseErr.Error()})
+		}
+
+		// Manually parse all fields from multipart form
+		req.Name = ctx.Request.FormValue("name")
+		req.Type = ctx.Request.FormValue("type")
+		req.Description = ctx.Request.FormValue("description")
+		req.Folder = ctx.Request.FormValue("folder")
+		req.Tags = ctx.Request.FormValue("tags")
+		req.Metadata = ctx.Request.FormValue("metadata")
+
+		// Parse parent_id if present
+		if parentIdStr := ctx.Request.FormValue("parent_id"); parentIdStr != "" {
+			if parentId, err := strconv.ParseUint(parentIdStr, 10, 32); err == nil {
+				pid := uint(parentId)
+				req.ParentId = &pid
+			}
+		}
+
+		// Parse author_id if present
+		if authorIdStr := ctx.Request.FormValue("author_id"); authorIdStr != "" {
+			if authorId, err := strconv.ParseUint(authorIdStr, 10, 32); err == nil {
+				aid := uint(authorId)
+				req.AuthorId = &aid
+			}
+		}
+
+		// Handle file upload if present
+		if file, err := ctx.FormFile("file"); err == nil {
+			req.File = file
+		}
 	}
 
-	// Handle file upload
-	if file, err := ctx.FormFile("file"); err == nil {
-		req.File = file
-	}
 
 	item, err := c.Service.Create(&req)
 	if err != nil {
@@ -218,11 +258,14 @@ func (c *MediaController) Get(ctx *router.Context) error {
 
 // List godoc
 // @Summary List media items
-// @Description Get a paginated list of media items
+// @Description Get a paginated list of media items with filtering support
 // @Tags Core/Media
 // @Produce json
 // @Param page query int false "Page number"
 // @Param limit query int false "Items per page"
+// @Param parent_id query int false "Parent folder ID for hierarchical navigation"
+// @Param folder query string false "Folder path for filtering"
+// @Param type query string false "Media type for filtering (e.g., image, audio, video)"
 // @Success 200 {object} types.PaginatedResponse
 // @Router /media [get]
 // @Security ApiKeyAuth
@@ -243,7 +286,48 @@ func (c *MediaController) List(ctx *router.Context) error {
 		}
 	}
 
-	result, err := c.Service.GetAll(&page, &limit)
+	// Parse filtering parameters
+	filters := &MediaFilters{}
+
+	// Parse parent_id parameter
+	if parentIdStr := ctx.Query("parent_id"); parentIdStr != "" {
+		if parentId, err := strconv.ParseUint(parentIdStr, 10, 32); err == nil {
+			parentIdUint := uint(parentId)
+			filters.ParentId = &parentIdUint
+		}
+	}
+
+	// Parse folder parameter
+	if folderStr := ctx.Query("folder"); folderStr != "" {
+		filters.Folder = folderStr
+	}
+
+	// Parse type parameter
+	if typeStr := ctx.Query("type"); typeStr != "" {
+		filters.Type = typeStr
+	}
+
+	// Get author ID from context or header
+	var authorId uint
+	if aid, exists := ctx.Get("author_id"); exists {
+		if authorIdUint, ok := aid.(uint); ok {
+			authorId = authorIdUint
+		}
+	} else if authorIdStr := ctx.GetHeader("Base-Author-Id"); authorIdStr != "" {
+		if aid, err := strconv.ParseUint(authorIdStr, 10, 32); err == nil {
+			authorId = uint(aid)
+		}
+	}
+
+	// Filter by author ID if available
+	if authorId > 0 {
+		filters.AuthorId = &authorId
+		// Include shared files (author_id = null) when filtering by author
+		filters.IncludeShared = true
+	}
+
+	// Use filtering method instead of basic GetAll
+	result, err := c.Service.GetAllWithFilters(&page, &limit, filters)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
@@ -253,18 +337,87 @@ func (c *MediaController) List(ctx *router.Context) error {
 
 // ListAll godoc
 // @Summary List all media items
-// @Description Get an unpaginated list of all media items
+// @Description Get an unpaginated list of all media items with filtering support
 // @Tags Core/Media
 // @Produce json
+// @Param parent_id query int false "Parent folder ID for hierarchical navigation"
+// @Param folder query string false "Folder path for filtering"
+// @Param type query string false "Media type for filtering (e.g., image, audio, video)"
 // @Success 200 {array} MediaListResponse
 // @Router /media/all [get]
 // @Security ApiKeyAuth
 // @Security BearerAuth
 func (c *MediaController) ListAll(ctx *router.Context) error {
-	result, err := c.Service.GetAll(nil, nil)
+	// Parse filtering parameters
+	filters := &MediaFilters{}
+
+	// Parse parent_id parameter
+	if parentIdStr := ctx.Query("parent_id"); parentIdStr != "" {
+		if parentId, err := strconv.ParseUint(parentIdStr, 10, 32); err == nil {
+			parentIdUint := uint(parentId)
+			filters.ParentId = &parentIdUint
+		}
+	}
+
+	// Parse folder parameter
+	if folderStr := ctx.Query("folder"); folderStr != "" {
+		filters.Folder = folderStr
+	}
+
+	// Parse type parameter
+	if typeStr := ctx.Query("type"); typeStr != "" {
+		filters.Type = typeStr
+	}
+
+	// Use filtering method without pagination
+	result, err := c.Service.GetAllWithFilters(nil, nil, filters)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
+// SyncFromR2 godoc
+// @Summary Sync media from R2 bucket
+// @Description Sync all files from R2 bucket to media database
+// @Tags Core/Media
+// @Accept json
+// @Produce json
+// @Param body body object false "Sync options" example({"prefix": "media/"})
+// @Success 200 {object} SyncResult
+// @Router /media/sync [post]
+// @Security ApiKeyAuth
+// @Security BearerAuth
+func (c *MediaController) SyncFromR2(ctx *router.Context) error {
+	// Parse request body for options
+	var req struct {
+		Prefix string `json:"prefix"`
+	}
+	if err := ctx.BindJSON(&req); err != nil {
+		req.Prefix = "media/" // Default prefix
+	}
+
+	// Get R2 config from environment
+	bucket := os.Getenv("STORAGE_BUCKET")
+	cdnURL := os.Getenv("CDN")
+	if cdnURL == "" {
+		cdnURL = os.Getenv("STORAGE_PUBLIC_URL")
+	}
+
+	// Run sync
+	result, err := c.Service.SyncFromR2(c.Storage, bucket, cdnURL, req.Prefix)
+	if err != nil {
+		c.Logger.Error("Failed to sync from R2", logger.String("error", err.Error()))
+		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+	}
+
+	c.Logger.Info("R2 sync completed",
+		logger.Int("total", result.TotalFiles),
+		logger.Int("processed", result.ProcessedFiles),
+		logger.Int("skipped", result.SkippedFiles),
+		logger.Int("failed", result.FailedFiles),
+	)
 
 	return ctx.JSON(http.StatusOK, result)
 }

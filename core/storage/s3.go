@@ -1,13 +1,15 @@
 package storage
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"mime/multipart"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // S3Config holds configuration for S3 storage
@@ -24,7 +26,7 @@ type S3Config struct {
 }
 
 type s3Provider struct {
-	client   *s3.S3
+	client   *s3.Client
 	bucket   string
 	endpoint string
 	baseURL  string
@@ -36,18 +38,36 @@ func NewS3Provider(config S3Config) (Provider, error) {
 		endpoint = "s3.amazonaws.com"
 	}
 
-	sess, err := session.NewSession(&aws.Config{
-		Credentials:      credentials.NewStaticCredentials(config.AccessKeyID, config.AccessKeySecret, ""),
-		Endpoint:         aws.String(endpoint),
-		Region:           aws.String(config.Region),
-		S3ForcePathStyle: aws.Bool(true),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
+	// Region default
+	region := config.Region
+	if region == "" {
+		region = "us-east-1"
 	}
 
+	// Load AWS config
+	var cfg aws.Config
+	var err error
+
+	cfg, err = awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			config.AccessKeyID,
+			config.AccessKeySecret,
+			"",
+		)),
+		awsconfig.WithRegion(region),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config: %w", err)
+	}
+
+	// Create S3 client with path-style addressing
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
+
 	return &s3Provider{
-		client:   s3.New(sess),
+		client:   client,
 		bucket:   config.Bucket,
 		endpoint: endpoint,
 		baseURL:  config.BaseURL,
@@ -67,11 +87,11 @@ func (p *s3Provider) Upload(file *multipart.FileHeader, config UploadConfig) (*U
 	key := fmt.Sprintf("%s/%s", config.UploadPath, filename)
 
 	// Upload to S3
-	_, err = p.client.PutObject(&s3.PutObjectInput{
+	// Note: ACL is deprecated - use bucket policies instead for access control
+	_, err = p.client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(key),
 		Body:   src,
-		ACL:    aws.String("public-read"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to S3: %w", err)
@@ -84,8 +104,31 @@ func (p *s3Provider) Upload(file *multipart.FileHeader, config UploadConfig) (*U
 	}, nil
 }
 
+func (p *s3Provider) UploadBytes(data []byte, filename string, config UploadConfig) (*UploadResult, error) {
+	// Generate unique filename
+	uniqueFilename := generateUniqueFilename(filename)
+	key := fmt.Sprintf("%s/%s", config.UploadPath, uniqueFilename)
+
+	// Upload to S3
+	// Note: ACL is deprecated - use bucket policies instead for access control
+	_, err := p.client.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket: aws.String(p.bucket),
+		Key:    aws.String(key),
+		Body:   bytes.NewReader(data),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload to S3: %w", err)
+	}
+
+	return &UploadResult{
+		Filename: uniqueFilename,
+		Path:     key,
+		Size:     int64(len(data)),
+	}, nil
+}
+
 func (p *s3Provider) Delete(path string) error {
-	_, err := p.client.DeleteObject(&s3.DeleteObjectInput{
+	_, err := p.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(path),
 	})

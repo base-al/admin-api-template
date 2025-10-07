@@ -102,16 +102,20 @@ type Attachable interface {
 // Provider interface for storage providers
 type Provider interface {
 	Upload(file *multipart.FileHeader, config UploadConfig) (*UploadResult, error)
+	UploadBytes(data []byte, filename string, config UploadConfig) (*UploadResult, error)
 	Delete(path string) error
 	GetURL(path string) string
 }
 
 // ActiveStorage handles file storage operations
 type ActiveStorage struct {
-	db          *gorm.DB
-	provider    Provider
-	defaultPath string
-	configs     map[string]map[string]AttachmentConfig
+	db             *gorm.DB
+	provider       Provider
+	defaultPath    string
+	configs        map[string]map[string]AttachmentConfig
+	imageProcessor *ImageProcessor
+	videoConverter *VideoConverter
+	audioConverter *AudioConverter
 }
 
 // UploadConfig holds configuration for file uploads

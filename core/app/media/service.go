@@ -24,10 +24,12 @@ type MediaService struct {
 
 func NewMediaService(db *gorm.DB, emitter *emitter.Emitter, activeStorage *storage.ActiveStorage, logger logger.Logger) *MediaService {
 	// Register file attachment configuration
+	// Note: Images (jpg, jpeg, png) will be auto-converted to webp
+	// Videos (mp4, mov, avi, etc.) will be auto-converted to webm
 	activeStorage.RegisterAttachment("media", storage.AttachmentConfig{
 		Field:             "file",
 		Path:              "media/files",
-		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".mp3", ".webp", ".webv", ".wav", ".ogg"},
+		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav", ".ogg"},
 		MaxFileSize:       100 << 20, // 100MB
 		Multiple:          false,
 	})
@@ -153,6 +155,15 @@ func (s *MediaService) Create(req *CreateMediaRequest) (*Media, error) {
 		Name:        req.Name,
 		Type:        req.Type,
 		Description: req.Description,
+		ParentId:    req.ParentId,
+		Folder:      req.Folder,
+		Tags:        req.Tags,
+		AuthorId:    req.AuthorId,
+	}
+
+	// Handle metadata - only set if not empty, otherwise leave as nil for NULL
+	if req.Metadata != "" {
+		item.Metadata = &req.Metadata
 	}
 
 	if err := tx.Create(item).Error; err != nil {
@@ -168,11 +179,6 @@ func (s *MediaService) Create(req *CreateMediaRequest) (*Media, error) {
 		if err != nil {
 			tx.Rollback()
 			s.Logger.Error("failed to upload file", logger.String("error", err.Error()))
-
-			// Provide helpful message for SQLite database lock issues
-			if err.Error() == "database is locked" {
-				return nil, fmt.Errorf("database is locked - SQLite limitation with concurrent writes. Please try again or use PostgreSQL/MySQL for production")
-			}
 			return nil, fmt.Errorf("failed to upload file: %w", err)
 		}
 
@@ -225,6 +231,9 @@ func (s *MediaService) Update(id uint, req *UpdateMediaRequest) (*Media, error) 
 	}
 	if req.Description != nil {
 		item.Description = *req.Description
+	}
+	if req.AuthorId != nil {
+		item.AuthorId = req.AuthorId
 	}
 
 	// Handle file update if provided
@@ -413,4 +422,123 @@ func (s *MediaService) RemoveFile(ctx context.Context, id uint) (*Media, error) 
 
 	// Reload item with relationships
 	return s.GetById(id)
+}
+
+// SyncFromR2 syncs media files from R2 bucket to database
+func (s *MediaService) SyncFromR2(activeStorage *storage.ActiveStorage, bucket, cdnURL, prefix string) (*SyncResult, error) {
+	// Get storage provider
+	provider := activeStorage.GetProvider()
+
+	// Create syncer
+	syncer, err := NewR2Syncer(s.DB, provider, bucket, cdnURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create R2 syncer: %w", err)
+	}
+
+	// Run sync
+	result, err := syncer.SyncFromR2(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetAllWithFilters returns a paginated list of media items with filtering support
+func (s *MediaService) GetAllWithFilters(page, limit *int, filters *MediaFilters) (*types.PaginatedResponse, error) {
+	var items []*Media
+	var total int64
+
+	// Build query
+	query := s.DB.Model(&Media{})
+
+	// Apply filters
+	hasFilters := filters != nil && (filters.ParentId != nil || filters.Folder != "" || filters.Type != "" || filters.AuthorId != nil)
+
+	if hasFilters {
+		// Filter by parent ID for hierarchical navigation
+		if filters.ParentId != nil {
+			query = query.Where("parent_id = ?", *filters.ParentId)
+		} else if filters.Folder == "" {
+			// If no parent_id and no folder filter, show only root level items
+			query = query.Where("parent_id IS NULL")
+		}
+
+		// Filter by folder path for backward compatibility
+		if filters.Folder != "" && filters.ParentId == nil {
+			query = query.Where("folder = ? OR folder LIKE ?", filters.Folder, filters.Folder+"/%")
+		}
+
+		// Filter by type
+		if filters.Type != "" {
+			query = query.Where("type LIKE ?", "%"+filters.Type+"%")
+		}
+
+		// Filter by author ID
+		if filters.AuthorId != nil {
+			if filters.IncludeShared {
+				// Include both author-specific and shared (null author_id) media
+				query = query.Where("author_id = ? OR author_id IS NULL", *filters.AuthorId)
+			} else {
+				// Only author-specific media
+				query = query.Where("author_id = ?", *filters.AuthorId)
+			}
+		} else if !filters.IncludeShared {
+			// If no author filter but include_shared is false, show only shared media
+			query = query.Where("author_id IS NULL")
+		}
+	} else if page != nil && limit != nil {
+		// Default: show root level items when no actual filters in paginated request
+		query = query.Where("parent_id IS NULL")
+	}
+	// If no actual filters and no pagination (ListAll case), return all items without parent_id filter
+
+	// Get total count with filters applied
+	if err := query.Count(&total).Error; err != nil {
+		s.Logger.Error("failed to count media with filters", logger.String("error", err.Error()))
+		return nil, fmt.Errorf("failed to count media: %w", err)
+	}
+
+	// Add pagination if provided
+	if page != nil && limit != nil {
+		offset := (*page - 1) * *limit
+		query = query.Offset(offset).Limit(*limit)
+	}
+
+	// Execute query with preloads
+	if err := query.Preload(clause.Associations).Find(&items).Error; err != nil {
+		s.Logger.Error("failed to get media with filters", logger.String("error", err.Error()))
+		return nil, fmt.Errorf("failed to get media: %w", err)
+	}
+
+	// Convert to response
+	responses := make([]any, len(items))
+	for i, item := range items {
+		responses[i] = item.ToListResponse()
+	}
+
+	// Calculate pagination
+	pageSize := 10
+	currentPage := 1
+	if limit != nil {
+		pageSize = *limit
+	}
+	if page != nil {
+		currentPage = *page
+	}
+	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	// Build paginated response
+	return &types.PaginatedResponse{
+		Data: responses,
+		Pagination: types.Pagination{
+			Total:      int(total),
+			Page:       currentPage,
+			PageSize:   pageSize,
+			TotalPages: totalPages,
+		},
+	}, nil
 }

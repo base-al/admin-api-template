@@ -70,6 +70,31 @@ func (p *localProvider) Upload(file *multipart.FileHeader, config UploadConfig) 
 	}, nil
 }
 
+func (p *localProvider) UploadBytes(data []byte, filename string, config UploadConfig) (*UploadResult, error) {
+	// Create upload directory
+	uploadPath := filepath.Join(p.basePath, config.UploadPath)
+	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("failed to create upload directory: %w", err)
+	}
+
+	// Generate unique filename
+	uniqueFilename := generateUniqueFilename(filename)
+	dst := filepath.Join(uploadPath, uniqueFilename)
+
+	// Write bytes to file
+	if err := os.WriteFile(dst, data, 0644); err != nil {
+		return nil, fmt.Errorf("failed to write file: %w", err)
+	}
+
+	relativePath := filepath.Join(config.UploadPath, uniqueFilename)
+
+	return &UploadResult{
+		Filename: uniqueFilename,
+		Path:     relativePath,
+		Size:     int64(len(data)),
+	}, nil
+}
+
 func (p *localProvider) Delete(path string) error {
 	fullPath := filepath.Join(p.basePath, path)
 	return os.Remove(fullPath)
