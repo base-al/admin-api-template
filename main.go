@@ -227,12 +227,6 @@ func (app *App) setupStaticRoutes() {
 	app.router.Static("/static", "./static")
 	app.router.Static("/storage", "./storage")
 	app.router.Static("/swag", "./docs")
-
-	// Serve frontend static files in production (if public directory exists)
-	if _, err := os.Stat("./public"); err == nil {
-		app.router.Static("/", "./public")
-		app.logger.Info("✅ Serving frontend from ./public")
-	}
 }
 
 // initWebSocket initializes the WebSocket hub if enabled
@@ -347,13 +341,20 @@ func (app *App) setupRoutes() *App {
 		})
 	})
 
-	// Root endpoint
-	app.router.GET("/", func(c *router.Context) error {
-		return c.JSON(200, map[string]any{
-			"message": "pong",
-			"version": app.config.Version,
+	// Check if public directory exists (production with frontend)
+	if _, err := os.Stat("./public"); err == nil {
+		// Serve frontend static files from root
+		app.router.Static("/", "./public")
+		app.logger.Info("✅ Serving frontend from ./public")
+	} else {
+		// Development mode - serve API info at root
+		app.router.GET("/", func(c *router.Context) error {
+			return c.JSON(200, map[string]any{
+				"message": "pong",
+				"version": app.config.Version,
+			})
 		})
-	})
+	}
 
 	// Swagger documentation - redirect /swagger to /swag
 	app.router.GET("/swagger", func(c *router.Context) error {
