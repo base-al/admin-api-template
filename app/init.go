@@ -35,6 +35,7 @@ func (am *AppModules) GetAppModules(deps module.Dependencies) map[string]module.
 
 	// Activities module
 	modules["activities"] = activities.Init(deps)
+
 	return modules
 }
 
