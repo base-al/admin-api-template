@@ -4,7 +4,7 @@ import (
 	"base/app/activities"
 	"base/app/employees"
 	"base/app/notifications"
-	"base/app/posts"
+
 	"base/app/search"
 	"base/app/settings"
 
@@ -32,9 +32,6 @@ func (am *AppModules) GetAppModules(deps module.Dependencies) map[string]module.
 
 	// Notifications module
 	modules["notifications"] = notifications.Init(deps)
-
-	// Posts module
-	modules["posts"] = posts.Init(deps)
 
 	// Activities module
 	modules["activities"] = activities.Init(deps)

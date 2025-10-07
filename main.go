@@ -25,12 +25,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// @title Negenet API
-// @description This is the API documentation for Negenet
-// @termsOfService https://negenet.com/terms
-// @contact.name Negenet Team
-// @contact.email info@negenet.com
-// @contact.url https://negenet.com
+// @title Base API
+// @description This is the API documentation for Base
+// @termsOfService https://example.com/terms
+// @contact.name Base Team
+// @contact.email info@example.com
+// @contact.url https://example.com
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 // @version 2.0.0
@@ -226,7 +226,13 @@ func (app *App) setupMiddleware() {
 func (app *App) setupStaticRoutes() {
 	app.router.Static("/static", "./static")
 	app.router.Static("/storage", "./storage")
-	app.router.Static("/docs", "./docs")
+	app.router.Static("/swag", "./docs")
+
+	// Serve frontend static files in production (if public directory exists)
+	if _, err := os.Stat("./public"); err == nil {
+		app.router.Static("/", "./public")
+		app.logger.Info("✅ Serving frontend from ./public")
+	}
 }
 
 // initWebSocket initializes the WebSocket hub if enabled
@@ -253,7 +259,7 @@ func (app *App) autoDiscoverModules() *App {
 func (app *App) setupAuthorizationMiddleware() {
 	// Create authorization service
 	authService := authorization.NewAuthorizationService(app.db.DB)
-	
+
 	// Add global middleware to inject authorization service into all API requests
 	app.router.Use(func(next router.HandlerFunc) router.HandlerFunc {
 		return func(c *router.Context) error {
@@ -262,7 +268,7 @@ func (app *App) setupAuthorizationMiddleware() {
 			return next(c)
 		}
 	})
-	
+
 	app.logger.Info("✅ Authorization service middleware injected globally")
 }
 
@@ -290,7 +296,7 @@ func (app *App) registerCoreModules() {
 	}
 
 	app.logger.Info("✅ Core modules registered", logger.Int("count", len(initialized)))
-	
+
 	// Add authorization service injection middleware globally
 	app.setupAuthorizationMiddleware()
 }
@@ -349,10 +355,12 @@ func (app *App) setupRoutes() *App {
 		})
 	})
 
-	// Swagger documentation - serve swag-generated docs
+	// Swagger documentation - redirect /swagger to /swag
+	app.router.GET("/swagger", func(c *router.Context) error {
+		return c.Redirect(302, "/swag/index.html")
+	})
 	app.router.GET("/swagger/*any", func(c *router.Context) error {
-		// Redirect to docs index.html for swagger UI
-		return c.Redirect(302, "/docs/index.html")
+		return c.Redirect(302, "/swag/index.html")
 	})
 
 	return app
@@ -367,8 +375,8 @@ func (app *App) displayServerInfo() *App {
 	fmt.Printf("📍 Server URLs:\n")
 	fmt.Printf("   • Local:   http://localhost%s\n", port)
 	fmt.Printf("   • Network: http://%s%s\n", localIP, port)
-	fmt.Printf("\n📚 Documentation:\n")
-	fmt.Printf("   • Swagger: http://localhost%s/docs/index.html\n", port)
+	fmt.Printf("\n📚 API Documentation:\n")
+	fmt.Printf("   • Swagger: http://localhost%s/swag/\n", port)
 	fmt.Printf("\n")
 
 	return app
