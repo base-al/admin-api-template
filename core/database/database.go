@@ -21,7 +21,9 @@ func InitDB(cfg *config.Config) (*Database, error) {
 	var err error
 	switch cfg.DBDriver {
 	case "sqlite":
-		DB, err = gorm.Open(sqlite.Open(cfg.DBPath), &gorm.Config{})
+		// Configure SQLite with WAL mode and busy timeout for better concurrency
+		dsn := cfg.DBPath + "?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL&cache=shared"
+		DB, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	case "mysql":
 		if cfg.DBURL == "" {
 			cfg.DBURL = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",

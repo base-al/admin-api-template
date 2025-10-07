@@ -168,6 +168,11 @@ func (s *MediaService) Create(req *CreateMediaRequest) (*Media, error) {
 		if err != nil {
 			tx.Rollback()
 			s.Logger.Error("failed to upload file", logger.String("error", err.Error()))
+
+			// Provide helpful message for SQLite database lock issues
+			if err.Error() == "database is locked" {
+				return nil, fmt.Errorf("database is locked - SQLite limitation with concurrent writes. Please try again or use PostgreSQL/MySQL for production")
+			}
 			return nil, fmt.Errorf("failed to upload file: %w", err)
 		}
 
