@@ -17,6 +17,7 @@ import (
 	"base/core/websocket"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -341,11 +342,44 @@ func (app *App) setupRoutes() *App {
 		})
 	})
 
+	// Swagger documentation - redirect /swagger to /swag
+	app.router.GET("/swagger", func(c *router.Context) error {
+		return c.Redirect(302, "/swag/index.html")
+	})
+	app.router.GET("/swagger/*any", func(c *router.Context) error {
+		return c.Redirect(302, "/swag/index.html")
+	})
+
 	// Check if public directory exists (production with frontend)
 	if _, err := os.Stat("./public"); err == nil {
-		// Serve frontend static files from root
-		app.router.Static("/", "./public")
 		app.logger.Info("✅ Serving frontend from ./public")
+
+		// Serve frontend assets (/_nuxt, /_fonts, etc.)
+		app.router.GET("/_nuxt/*filepath", func(c *router.Context) error {
+			filepath := c.Param("filepath")
+			http.ServeFile(c.Writer, c.Request, "./public/_nuxt/"+filepath)
+			return nil
+		})
+
+		app.router.GET("/_fonts/*filepath", func(c *router.Context) error {
+			filepath := c.Param("filepath")
+			http.ServeFile(c.Writer, c.Request, "./public/_fonts/"+filepath)
+			return nil
+		})
+
+		// Serve all other routes with index.html (SPA fallback)
+		app.router.NotFound(func(c *router.Context) error {
+			// If it's an API request, return 404 JSON
+			if strings.HasPrefix(c.Request.URL.Path, "/api") {
+				return c.JSON(404, map[string]any{
+					"error": "Not found",
+				})
+			}
+
+			// Otherwise serve index.html for frontend routing
+			http.ServeFile(c.Writer, c.Request, "./public/index.html")
+			return nil
+		})
 	} else {
 		// Development mode - serve API info at root
 		app.router.GET("/", func(c *router.Context) error {
@@ -355,14 +389,6 @@ func (app *App) setupRoutes() *App {
 			})
 		})
 	}
-
-	// Swagger documentation - redirect /swagger to /swag
-	app.router.GET("/swagger", func(c *router.Context) error {
-		return c.Redirect(302, "/swag/index.html")
-	})
-	app.router.GET("/swagger/*any", func(c *router.Context) error {
-		return c.Redirect(302, "/swag/index.html")
-	})
 
 	return app
 }
