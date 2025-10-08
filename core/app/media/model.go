@@ -249,6 +249,13 @@ func (item *Media) GetDepth() int {
 	return item.Parent.GetDepth() + 1
 }
 
+// MediaListView represents a simplified media object for list responses in other models
+type MediaListView struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
 // MediaFilters represents filtering options for media queries
 type MediaFilters struct {
 	ParentId      *uint  `json:"parent_id"`
