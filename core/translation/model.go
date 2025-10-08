@@ -38,15 +38,10 @@ func TranslatedField(original string) Field {
 
 // MarshalJSON implements custom JSON marshaling for Field
 func (f Field) MarshalJSON() ([]byte, error) {
-	// If no translations loaded, return the original value as a simple string
-	if len(f.Values) == 0 {
-		return json.Marshal(f.Original)
-	}
-
-	// Create the response structure with original value + translations
+	// Always return structured format with original value
 	result := make(map[string]string)
 
-	// Always include the original value if we have translations
+	// Always include the original value
 	if f.Original != "" {
 		result["original"] = f.Original
 	}
