@@ -109,7 +109,6 @@ func (m *AuthorizationModule) seedDefaultData() error {
 		"permission",
 		"media",
 		"profile",
-		"employee",
 		"settings",
 		"post",
 		"notification",

@@ -7,6 +7,7 @@ import (
 	"base/core/module"
 	"base/core/router"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +49,11 @@ func (m *Module) Migrate() error {
 		return err
 	}
 
-	return m.SeedPermissions()
+	if err := m.SeedPermissions(); err != nil {
+		return err
+	}
+
+	return m.SeedDefaultUser()
 }
 
 func (m *Module) SeedPermissions() error {
@@ -121,6 +126,43 @@ func (m *Module) SeedPermissions() error {
 	}
 
 	return nil
+}
+
+func (m *Module) SeedDefaultUser() error {
+	// Check if any users exist
+	var count int64
+	if err := m.DB.Model(&User{}).Count(&count).Error; err != nil {
+		return err
+	}
+
+	// If users already exist, skip seeding
+	if count > 0 {
+		return nil
+	}
+
+	// Get Super Admin role
+	var superAdminRole authorization.Role
+	if err := m.DB.Where("name = ? AND is_system = ?", "Super Admin", true).First(&superAdminRole).Error; err != nil {
+		return err
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// Create default admin user
+	defaultUser := User{
+		FirstName: "Super",
+		LastName:  "Admin",
+		Username:  "admin",
+		Email:     "admin@admin.com",
+		Password:  string(hashedPassword),
+		RoleId:    superAdminRole.Id,
+	}
+
+	return m.DB.Create(&defaultUser).Error
 }
 
 func (m *Module) GetModels() []any {
