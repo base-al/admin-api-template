@@ -2,7 +2,7 @@ package authorization
 
 import (
 	"errors"
-	
+
 	"base/core/logger"
 	"base/core/module"
 	"base/core/router"
