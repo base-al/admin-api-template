@@ -3,7 +3,6 @@ package settings
 import (
 	"errors"
 
-	"base/app/models"
 	"base/core/app/authorization"
 	"base/core/module"
 	"base/core/router"
@@ -45,7 +44,7 @@ func (m *Module) Init() error {
 
 func (m *Module) Migrate() error {
 	// Run auto migration first
-	if err := m.DB.AutoMigrate(&models.Settings{}); err != nil {
+	if err := m.DB.AutoMigrate(&Settings{}); err != nil {
 		return err
 	}
 
@@ -60,7 +59,7 @@ func (m *Module) Migrate() error {
 
 // seedDefaultSettings creates default system settings if they don't exist
 func (m *Module) seedDefaultSettings() error {
-	defaultSettings := []models.Settings{
+	defaultSettings := []Settings{
 		// Company Information
 		{
 			SettingKey:  "company_name",
@@ -272,7 +271,7 @@ func (m *Module) seedDefaultSettings() error {
 
 	// Insert settings that don't already exist
 	for _, setting := range defaultSettings {
-		var existing models.Settings
+		var existing Settings
 		result := m.DB.Where("setting_key = ?", setting.SettingKey).First(&existing)
 		
 		// If setting doesn't exist, create it
@@ -387,6 +386,6 @@ func (m *Module) SeedPermissions() error {
 
 func (m *Module) GetModels() []any {
 	return []any{
-		&models.Settings{},
+		&Settings{},
 	}
 }

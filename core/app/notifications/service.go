@@ -3,7 +3,6 @@ package notifications
 import (
 	"math"
 
-	"base/app/models"
 	"base/core/emitter"
 	"base/core/logger"
 	"base/core/storage"
@@ -72,8 +71,8 @@ func (s *NotificationService) applySorting(query *gorm.DB, sortBy *string, sortO
 	query.Order(sortField + " " + sortDirection)
 }
 
-func (s *NotificationService) Create(req *models.CreateNotificationRequest) (*models.Notification, error) {
-	item := &models.Notification{
+func (s *NotificationService) Create(req *CreateNotificationRequest) (*Notification, error) {
+	item := &Notification{
 		UserId:    req.UserId,
 		Title:     req.Title,
 		Body:      req.Body,
@@ -94,8 +93,8 @@ func (s *NotificationService) Create(req *models.CreateNotificationRequest) (*mo
 	return s.GetById(item.Id)
 }
 
-func (s *NotificationService) Update(id uint, req *models.UpdateNotificationRequest) (*models.Notification, error) {
-	item := &models.Notification{}
+func (s *NotificationService) Update(id uint, req *UpdateNotificationRequest) (*Notification, error) {
+	item := &Notification{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find notification for update",
 			logger.String("error", err.Error()),
@@ -162,7 +161,7 @@ func (s *NotificationService) Update(id uint, req *models.UpdateNotificationRequ
 }
 
 func (s *NotificationService) Delete(id uint) error {
-	item := &models.Notification{}
+	item := &Notification{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find notification for deletion",
 			logger.String("error", err.Error()),
@@ -185,8 +184,8 @@ func (s *NotificationService) Delete(id uint) error {
 	return nil
 }
 
-func (s *NotificationService) GetById(id uint) (*models.Notification, error) {
-	item := &models.Notification{}
+func (s *NotificationService) GetById(id uint) (*Notification, error) {
+	item := &Notification{}
 
 	query := item.Preload(s.DB)
 	if err := query.First(item, id).Error; err != nil {
@@ -200,10 +199,10 @@ func (s *NotificationService) GetById(id uint) (*models.Notification, error) {
 }
 
 func (s *NotificationService) GetAll(page *int, limit *int, sortBy *string, sortOrder *string) (*types.PaginatedResponse, error) {
-	var items []*models.Notification
+	var items []*Notification
 	var total int64
 
-	query := s.DB.Model(&models.Notification{})
+	query := s.DB.Model(&Notification{})
 	// Set default values if nil
 	defaultPage := 1
 	defaultLimit := 10
@@ -231,7 +230,7 @@ func (s *NotificationService) GetAll(page *int, limit *int, sortBy *string, sort
 	s.applySorting(query, sortBy, sortOrder)
 
 	// Don't preload relationships for list response (faster)
-	// query = (&models.Notification{}).Preload(query)
+	// query = (&Notification{}).Preload(query)
 
 	// Execute query
 	if err := query.Find(&items).Error; err != nil {
@@ -241,7 +240,7 @@ func (s *NotificationService) GetAll(page *int, limit *int, sortBy *string, sort
 	}
 
 	// Convert to response type
-	responses := make([]*models.NotificationListResponse, len(items))
+	responses := make([]*NotificationListResponse, len(items))
 	for i, item := range items {
 		responses[i] = item.ToListResponse()
 	}
@@ -264,10 +263,10 @@ func (s *NotificationService) GetAll(page *int, limit *int, sortBy *string, sort
 }
 
 // GetAllForSelect gets all items for select box/dropdown options (simplified response)
-func (s *NotificationService) GetAllForSelect() ([]*models.Notification, error) {
-	var items []*models.Notification
+func (s *NotificationService) GetAllForSelect() ([]*Notification, error) {
+	var items []*Notification
 
-	query := s.DB.Model(&models.Notification{})
+	query := s.DB.Model(&Notification{})
 
 	// Only select the necessary fields for select options
 	query = query.Select("id, title")

@@ -1,7 +1,6 @@
 package activities
 
 import (
-	"base/app/models"
 	"base/core/validator"
 )
 
@@ -9,7 +8,7 @@ import (
 var validate = validator.New()
 
 // ValidateActivityCreateRequest validates the create request
-func ValidateActivityCreateRequest(req *models.CreateActivityRequest) error {
+func ValidateActivityCreateRequest(req *CreateActivityRequest) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -26,7 +25,7 @@ func ValidateActivityCreateRequest(req *models.CreateActivityRequest) error {
 }
 
 // ValidateActivityUpdateRequest validates the update request
-func ValidateActivityUpdateRequest(req *models.UpdateActivityRequest, id uint) error {
+func ValidateActivityUpdateRequest(req *UpdateActivityRequest, id uint) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{

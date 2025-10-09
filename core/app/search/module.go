@@ -12,12 +12,19 @@ type Module struct {
 	DB         *gorm.DB
 	Service    *SearchService
 	Controller *SearchController
+	Registry   *SearchRegistry
 }
 
 // Init creates and initializes the Search module with all dependencies
-func Init(deps module.Dependencies) module.Module {
+// Pass a registry from app/init.go to configure searchable models
+func Init(deps module.Dependencies, registry *SearchRegistry) module.Module {
+	// If no registry provided, create an empty one
+	if registry == nil {
+		registry = NewSearchRegistry()
+	}
+
 	// Initialize service and controller
-	service := NewSearchService(deps.DB, deps.Emitter, deps.Storage, deps.Logger)
+	service := NewSearchService(deps.DB, deps.Emitter, deps.Storage, deps.Logger, registry)
 	controller := NewSearchController(service, deps.Storage)
 
 	// Create module
@@ -25,6 +32,7 @@ func Init(deps module.Dependencies) module.Module {
 		DB:         deps.DB,
 		Service:    service,
 		Controller: controller,
+		Registry:   registry,
 	}
 
 	return mod

@@ -1,4 +1,4 @@
-package models
+package employees
 
 import (
 	"base/core/app/authorization"

@@ -1,7 +1,6 @@
 package settings
 
 import (
-	"base/app/models"
 	"base/core/validator"
 )
 
@@ -9,7 +8,7 @@ import (
 var validate = validator.New()
 
 // ValidateSettingsCreateRequest validates the create request
-func ValidateSettingsCreateRequest(req *models.CreateSettingsRequest) error {
+func ValidateSettingsCreateRequest(req *CreateSettingsRequest) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -26,7 +25,7 @@ func ValidateSettingsCreateRequest(req *models.CreateSettingsRequest) error {
 }
 
 // ValidateSettingsUpdateRequest validates the update request
-func ValidateSettingsUpdateRequest(req *models.UpdateSettingsRequest, id uint) error {
+func ValidateSettingsUpdateRequest(req *UpdateSettingsRequest, id uint) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{

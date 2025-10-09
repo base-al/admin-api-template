@@ -1,56 +1,54 @@
-package activities
+package settings
 
 import (
 	"net/http"
 	"strconv"
 	"strings"
 
-	"base/app/models"
 	"base/core/router"
 	"base/core/storage"
 	"base/core/types"
 )
 
-type ActivityController struct {
-	Service *ActivityService
+type SettingsController struct {
+	Service *SettingsService
 	Storage *storage.ActiveStorage
 }
 
-func NewActivityController(service *ActivityService, storage *storage.ActiveStorage) *ActivityController {
-	return &ActivityController{
+func NewSettingsController(service *SettingsService, storage *storage.ActiveStorage) *SettingsController {
+	return &SettingsController{
 		Service: service,
 		Storage: storage,
 	}
 }
 
-func (c *ActivityController) Routes(router *router.RouterGroup) {
+func (c *SettingsController) Routes(router *router.RouterGroup) {
 	// Main CRUD endpoints - specific routes MUST come before parameterized routes
-	router.GET("/activities", c.List)          // Paginated list
-	router.POST("/activities", c.Create)       // Create
-	router.GET("/activities/all", c.ListAll)   // Unpaginated list - MUST be before /:id
-	router.GET("/activities/recent", c.GetRecent) // Get recent activities - MUST be before /:id
-	router.GET("/activities/:id", c.Get)       // Get by ID - MUST be after /all
-	router.PUT("/activities/:id", c.Update)    // Update
-	router.DELETE("/activities/:id", c.Delete) // Delete
+	router.GET("/settings", c.List)          // Paginated list
+	router.POST("/settings", c.Create)       // Create
+	router.GET("/settings/all", c.ListAll)   // Unpaginated list - MUST be before /:id
+	router.GET("/settings/:id", c.Get)       // Get by ID - MUST be after /all
+	router.PUT("/settings/:id", c.Update)    // Update
+	router.DELETE("/settings/:id", c.Delete) // Delete
 
 	//Upload endpoints for each file field
 }
 
-// CreateActivity godoc
-// @Summary Create a new Activity
-// @Description Create a new Activity with the input payload
-// @Tags App/Activity
+// CreateSettings godoc
+// @Summary Create a new Settings
+// @Description Create a new Settings with the input payload
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param activities body models.CreateActivityRequest true "Create Activity request"
-// @Success 201 {object} models.ActivityResponse
+// @Param settings body CreateSettingsRequest true "Create Settings request"
+// @Success 201 {object} SettingsResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /activities [post]
-func (c *ActivityController) Create(ctx *router.Context) error {
-	var req models.CreateActivityRequest
+// @Router /settings [post]
+func (c *SettingsController) Create(ctx *router.Context) error {
+	var req CreateSettingsRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -63,20 +61,20 @@ func (c *ActivityController) Create(ctx *router.Context) error {
 	return ctx.JSON(http.StatusCreated, item.ToResponse())
 }
 
-// GetActivity godoc
-// @Summary Get a Activity
-// @Description Get a Activity by its id
-// @Tags App/Activity
+// GetSettings godoc
+// @Summary Get a Settings
+// @Description Get a Settings by its id
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Activity id"
-// @Success 200 {object} models.ActivityResponse
+// @Param id path int true "Settings id"
+// @Success 200 {object} SettingsResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
-// @Router /activities/{id} [get]
-func (c *ActivityController) Get(ctx *router.Context) error {
+// @Router /settings/{id} [get]
+func (c *SettingsController) Get(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
@@ -90,23 +88,23 @@ func (c *ActivityController) Get(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// ListActivities godoc
-// @Summary List activities
-// @Description Get a list of activities
-// @Tags App/Activity
+// ListSettings godoc
+// @Summary List settings
+// @Description Get a list of settings
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
 // @Param limit query int false "Number of items per page"
-// @Param sort query string false "Sort field (id, created_at, updated_at,user_id,entity_type,entity_id,action,description,metadata,ip_address,user_agent,)"
+// @Param sort query string false "Sort field (id, created_at, updated_at,setting_key,label,group,type,value_string,value_int,value_float,value_bool,description,is_public,)"
 // @Param order query string false "Sort order (asc, desc)"
 // @Success 200 {object} types.PaginatedResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /activities [get]
-func (c *ActivityController) List(ctx *router.Context) error {
+// @Router /settings [get]
+func (c *SettingsController) List(ctx *router.Context) error {
 	var page, limit *int
 	var sortBy, sortOrder *string
 
@@ -149,25 +147,25 @@ func (c *ActivityController) List(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, paginatedResponse)
 }
 
-// ListAllActivities godoc
-// @Summary List all activities for select options
-// @Description Get a simplified list of all activities with id and name only (for dropdowns/select boxes)
-// @Tags App/Activity
+// ListAllSettings godoc
+// @Summary List all settings for select options
+// @Description Get a simplified list of all settings with id and name only (for dropdowns/select boxes)
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.ActivitySelectOption
+// @Success 200 {array} SettingsSelectOption
 // @Failure 500 {object} types.ErrorResponse
-// @Router /activities/all [get]
-func (c *ActivityController) ListAll(ctx *router.Context) error {
+// @Router /settings/all [get]
+func (c *SettingsController) ListAll(ctx *router.Context) error {
 	items, err := c.Service.GetAllForSelect()
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to fetch select options: " + err.Error()})
 	}
 
 	// Convert to select options
-	var selectOptions []*models.ActivitySelectOption
+	var selectOptions []*SettingsSelectOption
 	for _, item := range items {
 		selectOptions = append(selectOptions, item.ToSelectOption())
 	}
@@ -175,28 +173,28 @@ func (c *ActivityController) ListAll(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, selectOptions)
 }
 
-// UpdateActivity godoc
-// @Summary Update a Activity
-// @Description Update a Activity by its id
-// @Tags App/Activity
+// UpdateSettings godoc
+// @Summary Update a Settings
+// @Description Update a Settings by its id
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Activity id"
-// @Param activities body models.UpdateActivityRequest true "Update Activity request"
-// @Success 200 {object} models.ActivityResponse
+// @Param id path int true "Settings id"
+// @Param settings body UpdateSettingsRequest true "Update Settings request"
+// @Success 200 {object} SettingsResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /activities/{id} [put]
-func (c *ActivityController) Update(ctx *router.Context) error {
+// @Router /settings/{id} [put]
+func (c *SettingsController) Update(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
 	}
 
-	var req models.UpdateActivityRequest
+	var req UpdateSettingsRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -212,20 +210,20 @@ func (c *ActivityController) Update(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// DeleteActivity godoc
-// @Summary Delete a Activity
-// @Description Delete a Activity by its id
-// @Tags App/Activity
+// DeleteSettings godoc
+// @Summary Delete a Settings
+// @Description Delete a Settings by its id
+// @Tags App/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Activity id"
+// @Param id path int true "Settings id"
 // @Success 200 {object} types.SuccessResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /activities/{id} [delete]
-func (c *ActivityController) Delete(ctx *router.Context) error {
+// @Router /settings/{id} [delete]
+func (c *SettingsController) Delete(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
@@ -240,41 +238,4 @@ func (c *ActivityController) Delete(ctx *router.Context) error {
 
 	ctx.Status(http.StatusNoContent)
 	return nil
-}
-
-// GetRecent godoc
-// @Summary Get recent activities
-// @Description Get the most recent activities
-// @Tags App/Activity
-// @Security ApiKeyAuth
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param limit query int false "Number of activities to return (default 10)"
-// @Success 200 {array} models.ActivityResponse
-// @Failure 500 {object} types.ErrorResponse
-// @Router /activities/recent [get]
-func (c *ActivityController) GetRecent(ctx *router.Context) error {
-	limitStr := ctx.Query("limit")
-	limit := 10 // default
-
-	if limitStr != "" {
-		parsedLimit, err := strconv.Atoi(limitStr)
-		if err == nil && parsedLimit > 0 {
-			limit = parsedLimit
-		}
-	}
-
-	activities, err := c.Service.GetRecentActivities(limit)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to get recent activities: " + err.Error()})
-	}
-
-	// Convert to response format
-	responses := make([]*models.ActivityResponse, len(activities))
-	for i, activity := range activities {
-		responses[i] = activity.ToResponse()
-	}
-
-	return ctx.JSON(http.StatusOK, responses)
 }

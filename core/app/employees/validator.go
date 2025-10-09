@@ -1,15 +1,14 @@
-package notifications
+package employees
 
 import (
-	"base/app/models"
 	"base/core/validator"
 )
 
 // Global validator instance using Base core validator wrapper
 var validate = validator.New()
 
-// ValidateNotificationCreateRequest validates the create request
-func ValidateNotificationCreateRequest(req *models.CreateNotificationRequest) error {
+// ValidateEmployeeCreateRequest validates the create request
+func ValidateEmployeeCreateRequest(req *CreateEmployeeRequest) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -25,8 +24,8 @@ func ValidateNotificationCreateRequest(req *models.CreateNotificationRequest) er
 	return validate.Validate(req)
 }
 
-// ValidateNotificationUpdateRequest validates the update request
-func ValidateNotificationUpdateRequest(req *models.UpdateNotificationRequest, id uint) error {
+// ValidateEmployeeUpdateRequest validates the update request
+func ValidateEmployeeUpdateRequest(req *UpdateEmployeeRequest, id uint) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -53,8 +52,8 @@ func ValidateNotificationUpdateRequest(req *models.UpdateNotificationRequest, id
 	return nil
 }
 
-// ValidateNotificationDeleteRequest validates the delete request
-func ValidateNotificationDeleteRequest(id uint) error {
+// ValidateEmployeeDeleteRequest validates the delete request
+func ValidateEmployeeDeleteRequest(id uint) error {
 	return ValidateID(id)
 }
 

@@ -1,14 +1,8 @@
 package app
 
 import (
-	"base/app/activities"
-	"base/app/employees"
-	"base/app/notifications"
-
-	"base/app/search"
-	"base/app/settings"
-
 	"base/core/app/profile"
+	"base/core/app/search"
 	"base/core/database"
 	"base/core/module"
 )
@@ -21,20 +15,10 @@ type AppModules struct{}
 func (am *AppModules) GetAppModules(deps module.Dependencies) map[string]module.Module {
 	modules := make(map[string]module.Module)
 
-	// Settings module (MUST be first - other modules depend on it)
-	modules["settings"] = settings.Init(deps)
-
-	// Employees module
-	modules["employees"] = employees.Init(deps)
-
-	// Search module
-	modules["search"] = search.Init(deps)
-
-	// Notifications module
-	modules["notifications"] = notifications.Init(deps)
-
-	// Activities module
-	modules["activities"] = activities.Init(deps)
+	// Add your custom business logic modules here
+	// Example:
+	// modules["products"] = products.Init(deps)
+	// modules["orders"] = orders.Init(deps)
 
 	return modules
 }
@@ -147,4 +131,59 @@ func Extend(user_id uint) any {
 		"user_id": user_id,
 		"role":    roleInfo,
 	}
+}
+
+/*
+GetSearchRegistry configures which models are searchable in the global search.
+
+Simple API - Just specify table name and fields to search:
+
+	registry := search.NewSearchRegistry()
+
+	// Simple registration - just table and fields!
+	registry.RegisterSimple("products", search.SimpleSearchConfig{
+		Table:  "products",
+		Fields: []string{"name", "description", "sku"},
+	})
+
+	registry.RegisterSimple("orders", search.SimpleSearchConfig{
+		Table:  "orders",
+		Fields: []string{"order_number", "customer_name"},
+	})
+
+The search will automatically search across all registered models and return
+grouped results:
+
+	GET /api/search?q=john
+
+	{
+		"query": "john",
+		"total": 25,
+		"results": {
+			"products": [...],
+			"orders": [...]
+		},
+		"modules": ["products", "orders"]
+	}
+
+Advanced: For complex search logic, use RegisterWithCustomSearch() - see core/app/search/example.go
+*/
+func GetSearchRegistry() *search.SearchRegistry {
+	registry := search.NewSearchRegistry()
+
+	// Register your app models here - super simple!
+	// Just specify the table name and fields to search
+
+	// Example:
+	// registry.RegisterSimple("products", search.SimpleSearchConfig{
+	//     Table:  "products",
+	//     Fields: []string{"name", "description", "sku"},
+	// })
+
+	// registry.RegisterSimple("orders", search.SimpleSearchConfig{
+	//     Table:  "orders",
+	//     Fields: []string{"order_number", "customer_name", "notes"},
+	// })
+
+	return registry
 }

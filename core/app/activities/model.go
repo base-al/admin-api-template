@@ -1,4 +1,4 @@
-package models
+package activities
 
 import (
 	"encoding/json"

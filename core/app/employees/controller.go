@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"base/app/models"
 	"base/core/app/authorization"
 	"base/core/router"
 	"base/core/storage"
@@ -53,13 +52,13 @@ func (c *EmployeeController) Routes(router *router.RouterGroup) {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param employees body models.CreateEmployeeRequest true "Create Employee request"
-// @Success 201 {object} models.EmployeeResponse
+// @Param employees body CreateEmployeeRequest true "Create Employee request"
+// @Success 201 {object} EmployeeResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
 // @Router /employees [post]
 func (c *EmployeeController) Create(ctx *router.Context) error {
-	var req models.CreateEmployeeRequest
+	var req CreateEmployeeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -81,7 +80,7 @@ func (c *EmployeeController) Create(ctx *router.Context) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "Employee id"
-// @Success 200 {object} models.EmployeeResponse
+// @Success 200 {object} EmployeeResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
 // @Router /employees/{id} [get]
@@ -166,7 +165,7 @@ func (c *EmployeeController) List(ctx *router.Context) error {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.EmployeeSelectOption
+// @Success 200 {array} EmployeeSelectOption
 // @Failure 500 {object} types.ErrorResponse
 // @Router /employees/all [get]
 func (c *EmployeeController) ListAll(ctx *router.Context) error {
@@ -176,7 +175,7 @@ func (c *EmployeeController) ListAll(ctx *router.Context) error {
 	}
 
 	// Convert to select options
-	var selectOptions []*models.EmployeeSelectOption
+	var selectOptions []*EmployeeSelectOption
 	for _, item := range items {
 		selectOptions = append(selectOptions, item.ToSelectOption())
 	}
@@ -193,8 +192,8 @@ func (c *EmployeeController) ListAll(ctx *router.Context) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "Employee id"
-// @Param employees body models.UpdateEmployeeRequest true "Update Employee request"
-// @Success 200 {object} models.EmployeeResponse
+// @Param employees body UpdateEmployeeRequest true "Update Employee request"
+// @Success 200 {object} EmployeeResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
@@ -205,7 +204,7 @@ func (c *EmployeeController) Update(ctx *router.Context) error {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
 	}
 
-	var req models.UpdateEmployeeRequest
+	var req UpdateEmployeeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}

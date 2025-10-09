@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"math"
 
-	"base/app/models"
 	"base/core/emitter"
 	"base/core/logger"
 	"base/core/storage"
@@ -74,8 +73,8 @@ func (s *ActivityService) applySorting(query *gorm.DB, sortBy *string, sortOrder
 	query.Order(sortField + " " + sortDirection)
 }
 
-func (s *ActivityService) Create(req *models.CreateActivityRequest) (*models.Activity, error) {
-	item := &models.Activity{
+func (s *ActivityService) Create(req *CreateActivityRequest) (*Activity, error) {
+	item := &Activity{
 		UserId:      req.UserId,
 		EntityType:  req.EntityType,
 		EntityId:    req.EntityId,
@@ -97,8 +96,8 @@ func (s *ActivityService) Create(req *models.CreateActivityRequest) (*models.Act
 	return s.GetById(item.Id)
 }
 
-func (s *ActivityService) Update(id uint, req *models.UpdateActivityRequest) (*models.Activity, error) {
-	item := &models.Activity{}
+func (s *ActivityService) Update(id uint, req *UpdateActivityRequest) (*Activity, error) {
+	item := &Activity{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find activity for update",
 			logger.String("error", err.Error()),
@@ -165,7 +164,7 @@ func (s *ActivityService) Update(id uint, req *models.UpdateActivityRequest) (*m
 }
 
 func (s *ActivityService) Delete(id uint) error {
-	item := &models.Activity{}
+	item := &Activity{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find activity for deletion",
 			logger.String("error", err.Error()),
@@ -188,8 +187,8 @@ func (s *ActivityService) Delete(id uint) error {
 	return nil
 }
 
-func (s *ActivityService) GetById(id uint) (*models.Activity, error) {
-	item := &models.Activity{}
+func (s *ActivityService) GetById(id uint) (*Activity, error) {
+	item := &Activity{}
 
 	query := item.Preload(s.DB)
 	if err := query.First(item, id).Error; err != nil {
@@ -203,10 +202,10 @@ func (s *ActivityService) GetById(id uint) (*models.Activity, error) {
 }
 
 func (s *ActivityService) GetAll(page *int, limit *int, sortBy *string, sortOrder *string) (*types.PaginatedResponse, error) {
-	var items []*models.Activity
+	var items []*Activity
 	var total int64
 
-	query := s.DB.Model(&models.Activity{})
+	query := s.DB.Model(&Activity{})
 	// Set default values if nil
 	defaultPage := 1
 	defaultLimit := 10
@@ -234,7 +233,7 @@ func (s *ActivityService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	s.applySorting(query, sortBy, sortOrder)
 
 	// Don't preload relationships for list response (faster)
-	// query = (&models.Activity{}).Preload(query)
+	// query = (&Activity{}).Preload(query)
 
 	// Execute query
 	if err := query.Find(&items).Error; err != nil {
@@ -244,7 +243,7 @@ func (s *ActivityService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	}
 
 	// Convert to response type
-	responses := make([]*models.ActivityListResponse, len(items))
+	responses := make([]*ActivityListResponse, len(items))
 	for i, item := range items {
 		responses[i] = item.ToListResponse()
 	}
@@ -267,10 +266,10 @@ func (s *ActivityService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 }
 
 // GetAllForSelect gets all items for select box/dropdown options (simplified response)
-func (s *ActivityService) GetAllForSelect() ([]*models.Activity, error) {
-	var items []*models.Activity
+func (s *ActivityService) GetAllForSelect() ([]*Activity, error) {
+	var items []*Activity
 
-	query := s.DB.Model(&models.Activity{})
+	query := s.DB.Model(&Activity{})
 
 	// Only select the necessary fields for select options
 	query = query.Select("id") // Only ID if no name/title field found
@@ -300,7 +299,7 @@ func (s *ActivityService) Log(userId uint, entityType string, entityId uint, act
 		}
 	}
 
-	req := &models.CreateActivityRequest{
+	req := &CreateActivityRequest{
 		UserId:      userId,
 		EntityType:  entityType,
 		EntityId:    entityId,
@@ -321,15 +320,15 @@ func (s *ActivityService) Log(userId uint, entityType string, entityId uint, act
 }
 
 // GetRecentActivities gets the most recent N activities
-func (s *ActivityService) GetRecentActivities(limit int) ([]*models.Activity, error) {
-	var activities []*models.Activity
+func (s *ActivityService) GetRecentActivities(limit int) ([]*Activity, error) {
+	var activities []*Activity
 
-	query := s.DB.Model(&models.Activity{}).
+	query := s.DB.Model(&Activity{}).
 		Order("created_at DESC").
 		Limit(limit)
 
 	// Preload user relationship
-	query = (&models.Activity{}).Preload(query)
+	query = (&Activity{}).Preload(query)
 
 	if err := query.Find(&activities).Error; err != nil {
 		s.Logger.Error("failed to get recent activities", logger.String("error", err.Error()))
@@ -340,15 +339,15 @@ func (s *ActivityService) GetRecentActivities(limit int) ([]*models.Activity, er
 }
 
 // GetActivitiesByUser gets activities for a specific user
-func (s *ActivityService) GetActivitiesByUser(userId uint, limit int) ([]*models.Activity, error) {
-	var activities []*models.Activity
+func (s *ActivityService) GetActivitiesByUser(userId uint, limit int) ([]*Activity, error) {
+	var activities []*Activity
 
-	query := s.DB.Model(&models.Activity{}).
+	query := s.DB.Model(&Activity{}).
 		Where("user_id = ?", userId).
 		Order("created_at DESC").
 		Limit(limit)
 
-	query = (&models.Activity{}).Preload(query)
+	query = (&Activity{}).Preload(query)
 
 	if err := query.Find(&activities).Error; err != nil {
 		s.Logger.Error("failed to get user activities", logger.String("error", err.Error()))
@@ -359,15 +358,15 @@ func (s *ActivityService) GetActivitiesByUser(userId uint, limit int) ([]*models
 }
 
 // GetActivitiesByEntity gets activities for a specific entity
-func (s *ActivityService) GetActivitiesByEntity(entityType string, entityId uint, limit int) ([]*models.Activity, error) {
-	var activities []*models.Activity
+func (s *ActivityService) GetActivitiesByEntity(entityType string, entityId uint, limit int) ([]*Activity, error) {
+	var activities []*Activity
 
-	query := s.DB.Model(&models.Activity{}).
+	query := s.DB.Model(&Activity{}).
 		Where("entity_type = ? AND entity_id = ?", entityType, entityId).
 		Order("created_at DESC").
 		Limit(limit)
 
-	query = (&models.Activity{}).Preload(query)
+	query = (&Activity{}).Preload(query)
 
 	if err := query.Find(&activities).Error; err != nil {
 		s.Logger.Error("failed to get entity activities", logger.String("error", err.Error()))

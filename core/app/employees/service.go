@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math"
 
-	"base/app/models"
 	"base/core/emitter"
 	"base/core/logger"
 	"base/core/storage"
@@ -75,7 +74,7 @@ func (s *EmployeeService) applySorting(query *gorm.DB, sortBy *string, sortOrder
 	query.Order(sortField + " " + sortDirection)
 }
 
-func (s *EmployeeService) Create(req *models.CreateEmployeeRequest) (*models.Employee, error) {
+func (s *EmployeeService) Create(req *CreateEmployeeRequest) (*Employee, error) {
 	// Hash the password before saving
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -83,7 +82,7 @@ func (s *EmployeeService) Create(req *models.CreateEmployeeRequest) (*models.Emp
 		return nil, err
 	}
 
-	item := &models.Employee{
+	item := &Employee{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Username:  req.Username,
@@ -104,8 +103,8 @@ func (s *EmployeeService) Create(req *models.CreateEmployeeRequest) (*models.Emp
 	return s.GetById(item.Id)
 }
 
-func (s *EmployeeService) Update(id uint, req *models.UpdateEmployeeRequest) (*models.Employee, error) {
-	item := &models.Employee{}
+func (s *EmployeeService) Update(id uint, req *UpdateEmployeeRequest) (*Employee, error) {
+	item := &Employee{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find employee for update",
 			logger.String("error", err.Error()),
@@ -168,7 +167,7 @@ func (s *EmployeeService) Update(id uint, req *models.UpdateEmployeeRequest) (*m
 }
 
 func (s *EmployeeService) Delete(id uint) error {
-	item := &models.Employee{}
+	item := &Employee{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find employee for deletion",
 			logger.String("error", err.Error()),
@@ -191,8 +190,8 @@ func (s *EmployeeService) Delete(id uint) error {
 	return nil
 }
 
-func (s *EmployeeService) GetById(id uint) (*models.Employee, error) {
-	item := &models.Employee{}
+func (s *EmployeeService) GetById(id uint) (*Employee, error) {
+	item := &Employee{}
 
 	query := item.Preload(s.DB)
 	if err := query.First(item, id).Error; err != nil {
@@ -206,10 +205,10 @@ func (s *EmployeeService) GetById(id uint) (*models.Employee, error) {
 }
 
 func (s *EmployeeService) GetAll(page *int, limit *int, sortBy *string, sortOrder *string) (*types.PaginatedResponse, error) {
-	var items []*models.Employee
+	var items []*Employee
 	var total int64
 
-	query := s.DB.Model(&models.Employee{})
+	query := s.DB.Model(&Employee{})
 	// Set default values if nil
 	defaultPage := 1
 	defaultLimit := 10
@@ -237,7 +236,7 @@ func (s *EmployeeService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	s.applySorting(query, sortBy, sortOrder)
 
 	// Preload relationships for list response
-	query = (&models.Employee{}).Preload(query)
+	query = (&Employee{}).Preload(query)
 
 	// Execute query
 	if err := query.Find(&items).Error; err != nil {
@@ -247,7 +246,7 @@ func (s *EmployeeService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	}
 
 	// Convert to response type
-	responses := make([]*models.EmployeeListResponse, len(items))
+	responses := make([]*EmployeeListResponse, len(items))
 	for i, item := range items {
 		responses[i] = item.ToListResponse()
 	}
@@ -270,10 +269,10 @@ func (s *EmployeeService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 }
 
 // GetAllForSelect gets all items for select box/dropdown options (simplified response)
-func (s *EmployeeService) GetAllForSelect() ([]*models.Employee, error) {
-	var items []*models.Employee
+func (s *EmployeeService) GetAllForSelect() ([]*Employee, error) {
+	var items []*Employee
 
-	query := s.DB.Model(&models.Employee{})
+	query := s.DB.Model(&Employee{})
 
 	// Only select the necessary fields for select options
 	query = query.Select("id, first_name, last_name, username, email") // Select fields needed for display name
@@ -291,7 +290,7 @@ func (s *EmployeeService) GetAllForSelect() ([]*models.Employee, error) {
 
 // ChangeEmployeePassword changes the password for a specific employee
 func (s *EmployeeService) ChangeEmployeePassword(id uint, newPassword, currentPassword string) error {
-	var item models.Employee
+	var item Employee
 	if err := s.DB.First(&item, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			s.Logger.Error("Employee not found for password change",

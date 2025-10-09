@@ -1,55 +1,54 @@
-package settings
+package notifications
 
 import (
 	"net/http"
 	"strconv"
 	"strings"
 
-	"base/app/models"
 	"base/core/router"
 	"base/core/storage"
 	"base/core/types"
 )
 
-type SettingsController struct {
-	Service *SettingsService
+type NotificationController struct {
+	Service *NotificationService
 	Storage *storage.ActiveStorage
 }
 
-func NewSettingsController(service *SettingsService, storage *storage.ActiveStorage) *SettingsController {
-	return &SettingsController{
+func NewNotificationController(service *NotificationService, storage *storage.ActiveStorage) *NotificationController {
+	return &NotificationController{
 		Service: service,
 		Storage: storage,
 	}
 }
 
-func (c *SettingsController) Routes(router *router.RouterGroup) {
+func (c *NotificationController) Routes(router *router.RouterGroup) {
 	// Main CRUD endpoints - specific routes MUST come before parameterized routes
-	router.GET("/settings", c.List)          // Paginated list
-	router.POST("/settings", c.Create)       // Create
-	router.GET("/settings/all", c.ListAll)   // Unpaginated list - MUST be before /:id
-	router.GET("/settings/:id", c.Get)       // Get by ID - MUST be after /all
-	router.PUT("/settings/:id", c.Update)    // Update
-	router.DELETE("/settings/:id", c.Delete) // Delete
+	router.GET("/notifications", c.List)          // Paginated list
+	router.POST("/notifications", c.Create)       // Create
+	router.GET("/notifications/all", c.ListAll)   // Unpaginated list - MUST be before /:id
+	router.GET("/notifications/:id", c.Get)       // Get by ID - MUST be after /all
+	router.PUT("/notifications/:id", c.Update)    // Update
+	router.DELETE("/notifications/:id", c.Delete) // Delete
 
 	//Upload endpoints for each file field
 }
 
-// CreateSettings godoc
-// @Summary Create a new Settings
-// @Description Create a new Settings with the input payload
-// @Tags App/Settings
+// CreateNotification godoc
+// @Summary Create a new Notification
+// @Description Create a new Notification with the input payload
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param settings body models.CreateSettingsRequest true "Create Settings request"
-// @Success 201 {object} models.SettingsResponse
+// @Param notifications body CreateNotificationRequest true "Create Notification request"
+// @Success 201 {object} NotificationResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /settings [post]
-func (c *SettingsController) Create(ctx *router.Context) error {
-	var req models.CreateSettingsRequest
+// @Router /notifications [post]
+func (c *NotificationController) Create(ctx *router.Context) error {
+	var req CreateNotificationRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -62,20 +61,20 @@ func (c *SettingsController) Create(ctx *router.Context) error {
 	return ctx.JSON(http.StatusCreated, item.ToResponse())
 }
 
-// GetSettings godoc
-// @Summary Get a Settings
-// @Description Get a Settings by its id
-// @Tags App/Settings
+// GetNotification godoc
+// @Summary Get a Notification
+// @Description Get a Notification by its id
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Settings id"
-// @Success 200 {object} models.SettingsResponse
+// @Param id path int true "Notification id"
+// @Success 200 {object} NotificationResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
-// @Router /settings/{id} [get]
-func (c *SettingsController) Get(ctx *router.Context) error {
+// @Router /notifications/{id} [get]
+func (c *NotificationController) Get(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
@@ -89,23 +88,23 @@ func (c *SettingsController) Get(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// ListSettings godoc
-// @Summary List settings
-// @Description Get a list of settings
-// @Tags App/Settings
+// ListNotifications godoc
+// @Summary List notifications
+// @Description Get a list of notifications
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
 // @Param limit query int false "Number of items per page"
-// @Param sort query string false "Sort field (id, created_at, updated_at,setting_key,label,group,type,value_string,value_int,value_float,value_bool,description,is_public,)"
+// @Param sort query string false "Sort field (id, created_at, updated_at,user_id,title,body,type,read,read_at,action_url,)"
 // @Param order query string false "Sort order (asc, desc)"
 // @Success 200 {object} types.PaginatedResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /settings [get]
-func (c *SettingsController) List(ctx *router.Context) error {
+// @Router /notifications [get]
+func (c *NotificationController) List(ctx *router.Context) error {
 	var page, limit *int
 	var sortBy, sortOrder *string
 
@@ -148,25 +147,25 @@ func (c *SettingsController) List(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, paginatedResponse)
 }
 
-// ListAllSettings godoc
-// @Summary List all settings for select options
-// @Description Get a simplified list of all settings with id and name only (for dropdowns/select boxes)
-// @Tags App/Settings
+// ListAllNotifications godoc
+// @Summary List all notifications for select options
+// @Description Get a simplified list of all notifications with id and name only (for dropdowns/select boxes)
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.SettingsSelectOption
+// @Success 200 {array} NotificationSelectOption
 // @Failure 500 {object} types.ErrorResponse
-// @Router /settings/all [get]
-func (c *SettingsController) ListAll(ctx *router.Context) error {
+// @Router /notifications/all [get]
+func (c *NotificationController) ListAll(ctx *router.Context) error {
 	items, err := c.Service.GetAllForSelect()
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to fetch select options: " + err.Error()})
 	}
 
 	// Convert to select options
-	var selectOptions []*models.SettingsSelectOption
+	var selectOptions []*NotificationSelectOption
 	for _, item := range items {
 		selectOptions = append(selectOptions, item.ToSelectOption())
 	}
@@ -174,28 +173,28 @@ func (c *SettingsController) ListAll(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, selectOptions)
 }
 
-// UpdateSettings godoc
-// @Summary Update a Settings
-// @Description Update a Settings by its id
-// @Tags App/Settings
+// UpdateNotification godoc
+// @Summary Update a Notification
+// @Description Update a Notification by its id
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Settings id"
-// @Param settings body models.UpdateSettingsRequest true "Update Settings request"
-// @Success 200 {object} models.SettingsResponse
+// @Param id path int true "Notification id"
+// @Param notifications body UpdateNotificationRequest true "Update Notification request"
+// @Success 200 {object} NotificationResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /settings/{id} [put]
-func (c *SettingsController) Update(ctx *router.Context) error {
+// @Router /notifications/{id} [put]
+func (c *NotificationController) Update(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
 	}
 
-	var req models.UpdateSettingsRequest
+	var req UpdateNotificationRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -211,20 +210,20 @@ func (c *SettingsController) Update(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// DeleteSettings godoc
-// @Summary Delete a Settings
-// @Description Delete a Settings by its id
-// @Tags App/Settings
+// DeleteNotification godoc
+// @Summary Delete a Notification
+// @Description Delete a Notification by its id
+// @Tags App/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Settings id"
+// @Param id path int true "Notification id"
 // @Success 200 {object} types.SuccessResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /settings/{id} [delete]
-func (c *SettingsController) Delete(ctx *router.Context) error {
+// @Router /notifications/{id} [delete]
+func (c *NotificationController) Delete(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})

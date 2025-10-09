@@ -1,7 +1,6 @@
 package activities
 
 import (
-	"base/app/models"
 	"base/core/module"
 	"base/core/router"
 
@@ -41,11 +40,11 @@ func (m *Module) Init() error {
 }
 
 func (m *Module) Migrate() error {
-	return m.DB.AutoMigrate(&models.Activity{})
+	return m.DB.AutoMigrate(&Activity{})
 }
 
 func (m *Module) GetModels() []any {
 	return []any{
-		&models.Activity{},
+		&Activity{},
 	}
 }

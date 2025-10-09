@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"base/app/models"
 	"base/core/emitter"
 	"base/core/logger"
 	"base/core/storage"
@@ -39,7 +38,7 @@ func NewSettingsService(db *gorm.DB, emitter *emitter.Emitter, storage *storage.
 
 // GetSettingString retrieves a string setting value by key
 func (s *SettingsService) GetSettingString(key string, defaultValue string) string {
-	var setting models.Settings
+	var setting Settings
 	if err := s.DB.Where("setting_key = ?", key).First(&setting).Error; err != nil {
 		s.Logger.Warn("setting not found, using default", 
 			logger.String("key", key), 
@@ -51,7 +50,7 @@ func (s *SettingsService) GetSettingString(key string, defaultValue string) stri
 
 // GetSettingInt retrieves an integer setting value by key
 func (s *SettingsService) GetSettingInt(key string, defaultValue int) int {
-	var setting models.Settings
+	var setting Settings
 	if err := s.DB.Where("setting_key = ?", key).First(&setting).Error; err != nil {
 		s.Logger.Warn("setting not found, using default", 
 			logger.String("key", key), 
@@ -63,7 +62,7 @@ func (s *SettingsService) GetSettingInt(key string, defaultValue int) int {
 
 // GetSettingBool retrieves a boolean setting value by key
 func (s *SettingsService) GetSettingBool(key string, defaultValue bool) bool {
-	var setting models.Settings
+	var setting Settings
 	if err := s.DB.Where("setting_key = ?", key).First(&setting).Error; err != nil {
 		s.Logger.Warn("setting not found, using default", 
 			logger.String("key", key), 
@@ -75,7 +74,7 @@ func (s *SettingsService) GetSettingBool(key string, defaultValue bool) bool {
 
 // GetSettingFloat retrieves a float setting value by key
 func (s *SettingsService) GetSettingFloat(key string, defaultValue float64) float64 {
-	var setting models.Settings
+	var setting Settings
 	if err := s.DB.Where("setting_key = ?", key).First(&setting).Error; err != nil {
 		s.Logger.Warn("setting not found, using default", 
 			logger.String("key", key), 
@@ -86,8 +85,8 @@ func (s *SettingsService) GetSettingFloat(key string, defaultValue float64) floa
 }
 
 // GetSettingsByGroup retrieves all settings for a specific group
-func (s *SettingsService) GetSettingsByGroup(group string) ([]*models.Settings, error) {
-	var settings []*models.Settings
+func (s *SettingsService) GetSettingsByGroup(group string) ([]*Settings, error) {
+	var settings []*Settings
 	if err := s.DB.Where("group = ?", group).Find(&settings).Error; err != nil {
 		s.Logger.Error("failed to get settings by group", 
 			logger.String("group", group), 
@@ -99,12 +98,12 @@ func (s *SettingsService) GetSettingsByGroup(group string) ([]*models.Settings, 
 
 // UpsertSetting creates or updates a setting
 func (s *SettingsService) UpsertSetting(key, label, group, settingType, description string, isPublic bool, stringVal string, intVal int, floatVal float64, boolVal bool) error {
-	var setting models.Settings
+	var setting Settings
 	result := s.DB.Where("setting_key = ?", key).First(&setting)
 	
 	if result.Error != nil && result.Error.Error() == "record not found" {
 		// Create new setting
-		setting = models.Settings{
+		setting = Settings{
 			SettingKey:  key,
 			Label:       label,
 			Group:       group,
@@ -188,8 +187,8 @@ func (s *SettingsService) applySorting(query *gorm.DB, sortBy *string, sortOrder
 	query.Order(sortField + " " + sortDirection)
 }
 
-func (s *SettingsService) Create(req *models.CreateSettingsRequest) (*models.Settings, error) {
-	item := &models.Settings{
+func (s *SettingsService) Create(req *CreateSettingsRequest) (*Settings, error) {
+	item := &Settings{
 		SettingKey:  req.SettingKey,
 		Label:       req.Label,
 		Group:       req.Group,
@@ -213,8 +212,8 @@ func (s *SettingsService) Create(req *models.CreateSettingsRequest) (*models.Set
 	return s.GetById(item.Id)
 }
 
-func (s *SettingsService) Update(id uint, req *models.UpdateSettingsRequest) (*models.Settings, error) {
-	item := &models.Settings{}
+func (s *SettingsService) Update(id uint, req *UpdateSettingsRequest) (*Settings, error) {
+	item := &Settings{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find settings for update",
 			logger.String("error", err.Error()),
@@ -289,7 +288,7 @@ func (s *SettingsService) Update(id uint, req *models.UpdateSettingsRequest) (*m
 }
 
 func (s *SettingsService) Delete(id uint) error {
-	item := &models.Settings{}
+	item := &Settings{}
 	if err := s.DB.First(item, id).Error; err != nil {
 		s.Logger.Error("failed to find settings for deletion",
 			logger.String("error", err.Error()),
@@ -312,8 +311,8 @@ func (s *SettingsService) Delete(id uint) error {
 	return nil
 }
 
-func (s *SettingsService) GetById(id uint) (*models.Settings, error) {
-	item := &models.Settings{}
+func (s *SettingsService) GetById(id uint) (*Settings, error) {
+	item := &Settings{}
 
 	query := item.Preload(s.DB)
 	if err := query.First(item, id).Error; err != nil {
@@ -327,10 +326,10 @@ func (s *SettingsService) GetById(id uint) (*models.Settings, error) {
 }
 
 func (s *SettingsService) GetAll(page *int, limit *int, sortBy *string, sortOrder *string) (*types.PaginatedResponse, error) {
-	var items []*models.Settings
+	var items []*Settings
 	var total int64
 
-	query := s.DB.Model(&models.Settings{})
+	query := s.DB.Model(&Settings{})
 	// Set default values if nil
 	defaultPage := 1
 	defaultLimit := 10
@@ -358,7 +357,7 @@ func (s *SettingsService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	s.applySorting(query, sortBy, sortOrder)
 
 	// Don't preload relationships for list response (faster)
-	// query = (&models.Settings{}).Preload(query)
+	// query = (&Settings{}).Preload(query)
 
 	// Execute query
 	if err := query.Find(&items).Error; err != nil {
@@ -368,7 +367,7 @@ func (s *SettingsService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 	}
 
 	// Convert to response type
-	responses := make([]*models.SettingsListResponse, len(items))
+	responses := make([]*SettingsListResponse, len(items))
 	for i, item := range items {
 		responses[i] = item.ToListResponse()
 	}
@@ -391,10 +390,10 @@ func (s *SettingsService) GetAll(page *int, limit *int, sortBy *string, sortOrde
 }
 
 // GetAllForSelect gets all items for select box/dropdown options (simplified response)
-func (s *SettingsService) GetAllForSelect() ([]*models.Settings, error) {
-	var items []*models.Settings
+func (s *SettingsService) GetAllForSelect() ([]*Settings, error) {
+	var items []*Settings
 
-	query := s.DB.Model(&models.Settings{})
+	query := s.DB.Model(&Settings{})
 
 	// Only select the necessary fields for select options
 	query = query.Select("id") // Only ID if no name/title field found
@@ -411,8 +410,8 @@ func (s *SettingsService) GetAllForSelect() ([]*models.Settings, error) {
 }
 
 // GetByKey retrieves a setting value by its setting_key
-func (s *SettingsService) GetByKey(settingKey string) (*models.Settings, error) {
-	item := &models.Settings{}
+func (s *SettingsService) GetByKey(settingKey string) (*Settings, error) {
+	item := &Settings{}
 	if err := s.DB.Where("setting_key = ?", settingKey).First(item).Error; err != nil {
 		s.Logger.Error("failed to get setting by key",
 			logger.String("error", err.Error()),
@@ -423,8 +422,8 @@ func (s *SettingsService) GetByKey(settingKey string) (*models.Settings, error) 
 }
 
 // GetByGroup retrieves all settings in a group
-func (s *SettingsService) GetByGroup(group string) ([]*models.Settings, error) {
-	var items []*models.Settings
+func (s *SettingsService) GetByGroup(group string) ([]*Settings, error) {
+	var items []*Settings
 	if err := s.DB.Where("group = ?", group).Find(&items).Error; err != nil {
 		s.Logger.Error("failed to get settings by group",
 			logger.String("error", err.Error()),
@@ -508,7 +507,7 @@ func (s *SettingsService) SetValue(settingKey, label, group, settingType string,
 	existing, err := s.GetByKey(settingKey)
 	if err != nil {
 		// Create new setting
-		_, createErr := s.Create(&models.CreateSettingsRequest{
+		_, createErr := s.Create(&CreateSettingsRequest{
 			SettingKey:  settingKey,
 			Label:       label,
 			Group:       group,
@@ -524,7 +523,7 @@ func (s *SettingsService) SetValue(settingKey, label, group, settingType string,
 	}
 
 	// Update existing setting
-	_, updateErr := s.Update(existing.Id, &models.UpdateSettingsRequest{
+	_, updateErr := s.Update(existing.Id, &UpdateSettingsRequest{
 		SettingKey:  settingKey,
 		Label:       label,
 		Group:       group,

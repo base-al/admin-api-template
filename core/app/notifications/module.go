@@ -1,12 +1,10 @@
-package employees
+package notifications
 
 import (
-	"errors"
-
-	"base/app/models"
 	"base/core/app/authorization"
 	"base/core/module"
 	"base/core/router"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -14,15 +12,15 @@ import (
 type Module struct {
 	module.DefaultModule
 	DB         *gorm.DB
-	Service    *EmployeeService
-	Controller *EmployeeController
+	Service    *NotificationService
+	Controller *NotificationController
 }
 
-// Init creates and initializes the Employee module with all dependencies
+// Init creates and initializes the Notification module with all dependencies
 func Init(deps module.Dependencies) module.Module {
 	// Initialize service and controller
-	service := NewEmployeeService(deps.DB, deps.Emitter, deps.Storage, deps.Logger)
-	controller := NewEmployeeController(service, deps.Storage)
+	service := NewNotificationService(deps.DB, deps.Emitter, deps.Storage, deps.Logger)
+	controller := NewNotificationController(service, deps.Storage)
 
 	// Create module
 	mod := &Module{
@@ -40,12 +38,8 @@ func (m *Module) Routes(router *router.RouterGroup) {
 }
 
 func (m *Module) Init() error {
-	return nil
-}
-
-func (m *Module) Migrate() error {
-	err := m.DB.AutoMigrate(&models.Employee{})
-	if err != nil {
+	// Auto-migrate the model
+	if err := m.Migrate(); err != nil {
 		return err
 	}
 
@@ -58,54 +52,45 @@ func (m *Module) SeedPermissions() error {
 		return err
 	}
 
-	// Define permissions based on actual controller endpoints:
-	// GET /employees (List), POST /employees (Create), GET /employees/all (ListAll)
-	// GET /employees/:id (Get), PUT /employees/:id (Update), DELETE /employees/:id (Delete)
-
-	employeePermissions := []authorization.Permission{
+	// Define permissions for notification CRUD operations
+	notificationPermissions := []authorization.Permission{
 		{
-			Name:         "employee list",
-			Description:  "View employee list (paginated)",
-			ResourceType: "employee",
+			Name:         "notification list",
+			Description:  "View notification list",
+			ResourceType: "notification",
 			Action:       "list",
 		},
 		{
-			Name:         "employee list_all",
-			Description:  "View all employees (unpaginated)",
-			ResourceType: "employee",
-			Action:       "list_all",
-		},
-		{
-			Name:         "employee read",
-			Description:  "View employee details",
-			ResourceType: "employee",
+			Name:         "notification read",
+			Description:  "View notification details",
+			ResourceType: "notification",
 			Action:       "read",
 		},
 		{
-			Name:         "employee create",
-			Description:  "Create new employees",
-			ResourceType: "employee",
+			Name:         "notification create",
+			Description:  "Create new notifications",
+			ResourceType: "notification",
 			Action:       "create",
 		},
 		{
-			Name:         "employee update",
-			Description:  "Update employee information",
-			ResourceType: "employee",
+			Name:         "notification update",
+			Description:  "Update notification information",
+			ResourceType: "notification",
 			Action:       "update",
 		},
 		{
-			Name:         "employee delete",
-			Description:  "Delete employees",
-			ResourceType: "employee",
+			Name:         "notification delete",
+			Description:  "Delete notifications",
+			ResourceType: "notification",
 			Action:       "delete",
 		},
 	}
 
 	// Upsert permissions - create or update if they exist
-	for _, permission := range employeePermissions {
+	for _, permission := range notificationPermissions {
 		var existingPermission authorization.Permission
 		result := m.DB.Where("resource_type = ? AND action = ?", permission.ResourceType, permission.Action).First(&existingPermission)
-		
+
 		if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// Create new permission
 			if err := m.DB.Create(&permission).Error; err != nil {
@@ -127,8 +112,12 @@ func (m *Module) SeedPermissions() error {
 	return nil
 }
 
+func (m *Module) Migrate() error {
+	return m.DB.AutoMigrate(&Notification{})
+}
+
 func (m *Module) GetModels() []any {
 	return []any{
-		&models.Employee{},
+		&Notification{},
 	}
 }

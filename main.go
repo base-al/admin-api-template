@@ -280,9 +280,12 @@ func (app *App) registerCoreModules() {
 		Config:      app.config,
 	}
 
+	// Get search registry from app
+	searchRegistry := appmodules.GetSearchRegistry()
+
 	// Initialize core modules via orchestrator to ensure proper init/migrate/routes
 	initializer := module.NewInitializer(app.logger)
-	coreProvider := coremodules.NewCoreModules()
+	coreProvider := coremodules.NewCoreModules(searchRegistry)
 	orchestrator := module.NewCoreOrchestrator(initializer, coreProvider)
 
 	initialized, err := orchestrator.InitializeCoreModules(deps)

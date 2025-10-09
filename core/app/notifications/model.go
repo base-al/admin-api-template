@@ -1,4 +1,4 @@
-package models
+package notifications
 
 import (
 	"base/core/types"

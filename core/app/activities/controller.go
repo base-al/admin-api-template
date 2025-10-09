@@ -1,55 +1,55 @@
-package notifications
+package activities
 
 import (
 	"net/http"
 	"strconv"
 	"strings"
 
-	"base/app/models"
 	"base/core/router"
 	"base/core/storage"
 	"base/core/types"
 )
 
-type NotificationController struct {
-	Service *NotificationService
+type ActivityController struct {
+	Service *ActivityService
 	Storage *storage.ActiveStorage
 }
 
-func NewNotificationController(service *NotificationService, storage *storage.ActiveStorage) *NotificationController {
-	return &NotificationController{
+func NewActivityController(service *ActivityService, storage *storage.ActiveStorage) *ActivityController {
+	return &ActivityController{
 		Service: service,
 		Storage: storage,
 	}
 }
 
-func (c *NotificationController) Routes(router *router.RouterGroup) {
+func (c *ActivityController) Routes(router *router.RouterGroup) {
 	// Main CRUD endpoints - specific routes MUST come before parameterized routes
-	router.GET("/notifications", c.List)          // Paginated list
-	router.POST("/notifications", c.Create)       // Create
-	router.GET("/notifications/all", c.ListAll)   // Unpaginated list - MUST be before /:id
-	router.GET("/notifications/:id", c.Get)       // Get by ID - MUST be after /all
-	router.PUT("/notifications/:id", c.Update)    // Update
-	router.DELETE("/notifications/:id", c.Delete) // Delete
+	router.GET("/activities", c.List)          // Paginated list
+	router.POST("/activities", c.Create)       // Create
+	router.GET("/activities/all", c.ListAll)   // Unpaginated list - MUST be before /:id
+	router.GET("/activities/recent", c.GetRecent) // Get recent activities - MUST be before /:id
+	router.GET("/activities/:id", c.Get)       // Get by ID - MUST be after /all
+	router.PUT("/activities/:id", c.Update)    // Update
+	router.DELETE("/activities/:id", c.Delete) // Delete
 
 	//Upload endpoints for each file field
 }
 
-// CreateNotification godoc
-// @Summary Create a new Notification
-// @Description Create a new Notification with the input payload
-// @Tags App/Notification
+// CreateActivity godoc
+// @Summary Create a new Activity
+// @Description Create a new Activity with the input payload
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param notifications body models.CreateNotificationRequest true "Create Notification request"
-// @Success 201 {object} models.NotificationResponse
+// @Param activities body CreateActivityRequest true "Create Activity request"
+// @Success 201 {object} ActivityResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /notifications [post]
-func (c *NotificationController) Create(ctx *router.Context) error {
-	var req models.CreateNotificationRequest
+// @Router /activities [post]
+func (c *ActivityController) Create(ctx *router.Context) error {
+	var req CreateActivityRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -62,20 +62,20 @@ func (c *NotificationController) Create(ctx *router.Context) error {
 	return ctx.JSON(http.StatusCreated, item.ToResponse())
 }
 
-// GetNotification godoc
-// @Summary Get a Notification
-// @Description Get a Notification by its id
-// @Tags App/Notification
+// GetActivity godoc
+// @Summary Get a Activity
+// @Description Get a Activity by its id
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Notification id"
-// @Success 200 {object} models.NotificationResponse
+// @Param id path int true "Activity id"
+// @Success 200 {object} ActivityResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
-// @Router /notifications/{id} [get]
-func (c *NotificationController) Get(ctx *router.Context) error {
+// @Router /activities/{id} [get]
+func (c *ActivityController) Get(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
@@ -89,23 +89,23 @@ func (c *NotificationController) Get(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// ListNotifications godoc
-// @Summary List notifications
-// @Description Get a list of notifications
-// @Tags App/Notification
+// ListActivities godoc
+// @Summary List activities
+// @Description Get a list of activities
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
 // @Param limit query int false "Number of items per page"
-// @Param sort query string false "Sort field (id, created_at, updated_at,user_id,title,body,type,read,read_at,action_url,)"
+// @Param sort query string false "Sort field (id, created_at, updated_at,user_id,entity_type,entity_id,action,description,metadata,ip_address,user_agent,)"
 // @Param order query string false "Sort order (asc, desc)"
 // @Success 200 {object} types.PaginatedResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /notifications [get]
-func (c *NotificationController) List(ctx *router.Context) error {
+// @Router /activities [get]
+func (c *ActivityController) List(ctx *router.Context) error {
 	var page, limit *int
 	var sortBy, sortOrder *string
 
@@ -148,25 +148,25 @@ func (c *NotificationController) List(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, paginatedResponse)
 }
 
-// ListAllNotifications godoc
-// @Summary List all notifications for select options
-// @Description Get a simplified list of all notifications with id and name only (for dropdowns/select boxes)
-// @Tags App/Notification
+// ListAllActivities godoc
+// @Summary List all activities for select options
+// @Description Get a simplified list of all activities with id and name only (for dropdowns/select boxes)
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.NotificationSelectOption
+// @Success 200 {array} ActivitySelectOption
 // @Failure 500 {object} types.ErrorResponse
-// @Router /notifications/all [get]
-func (c *NotificationController) ListAll(ctx *router.Context) error {
+// @Router /activities/all [get]
+func (c *ActivityController) ListAll(ctx *router.Context) error {
 	items, err := c.Service.GetAllForSelect()
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to fetch select options: " + err.Error()})
 	}
 
 	// Convert to select options
-	var selectOptions []*models.NotificationSelectOption
+	var selectOptions []*ActivitySelectOption
 	for _, item := range items {
 		selectOptions = append(selectOptions, item.ToSelectOption())
 	}
@@ -174,28 +174,28 @@ func (c *NotificationController) ListAll(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, selectOptions)
 }
 
-// UpdateNotification godoc
-// @Summary Update a Notification
-// @Description Update a Notification by its id
-// @Tags App/Notification
+// UpdateActivity godoc
+// @Summary Update a Activity
+// @Description Update a Activity by its id
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Notification id"
-// @Param notifications body models.UpdateNotificationRequest true "Update Notification request"
-// @Success 200 {object} models.NotificationResponse
+// @Param id path int true "Activity id"
+// @Param activities body UpdateActivityRequest true "Update Activity request"
+// @Success 200 {object} ActivityResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 404 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /notifications/{id} [put]
-func (c *NotificationController) Update(ctx *router.Context) error {
+// @Router /activities/{id} [put]
+func (c *ActivityController) Update(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
 	}
 
-	var req models.UpdateNotificationRequest
+	var req UpdateActivityRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: err.Error()})
 	}
@@ -211,20 +211,20 @@ func (c *NotificationController) Update(ctx *router.Context) error {
 	return ctx.JSON(http.StatusOK, item.ToResponse())
 }
 
-// DeleteNotification godoc
-// @Summary Delete a Notification
-// @Description Delete a Notification by its id
-// @Tags App/Notification
+// DeleteActivity godoc
+// @Summary Delete a Activity
+// @Description Delete a Activity by its id
+// @Tags App/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path int true "Notification id"
+// @Param id path int true "Activity id"
 // @Success 200 {object} types.SuccessResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
-// @Router /notifications/{id} [delete]
-func (c *NotificationController) Delete(ctx *router.Context) error {
+// @Router /activities/{id} [delete]
+func (c *ActivityController) Delete(ctx *router.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid id format"})
@@ -239,4 +239,41 @@ func (c *NotificationController) Delete(ctx *router.Context) error {
 
 	ctx.Status(http.StatusNoContent)
 	return nil
+}
+
+// GetRecent godoc
+// @Summary Get recent activities
+// @Description Get the most recent activities
+// @Tags App/Activity
+// @Security ApiKeyAuth
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param limit query int false "Number of activities to return (default 10)"
+// @Success 200 {array} ActivityResponse
+// @Failure 500 {object} types.ErrorResponse
+// @Router /activities/recent [get]
+func (c *ActivityController) GetRecent(ctx *router.Context) error {
+	limitStr := ctx.Query("limit")
+	limit := 10 // default
+
+	if limitStr != "" {
+		parsedLimit, err := strconv.Atoi(limitStr)
+		if err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	activities, err := c.Service.GetRecentActivities(limit)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to get recent activities: " + err.Error()})
+	}
+
+	// Convert to response format
+	responses := make([]*ActivityResponse, len(activities))
+	for i, activity := range activities {
+		responses[i] = activity.ToResponse()
+	}
+
+	return ctx.JSON(http.StatusOK, responses)
 }

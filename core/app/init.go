@@ -1,18 +1,25 @@
 package app
 
 import (
+	"base/core/app/activities"
 	"base/core/app/authentication"
 	"base/core/app/authorization"
+	"base/core/app/employees"
 	"base/core/app/media"
+	"base/core/app/notifications"
 	"base/core/app/oauth"
 	"base/core/app/profile"
+	"base/core/app/search"
+	"base/core/app/settings"
 	"base/core/module"
 	"base/core/scheduler"
 	"base/core/translation"
 )
 
 // CoreModules implements module.CoreModuleProvider interface
-type CoreModules struct{}
+type CoreModules struct {
+	SearchRegistry *search.SearchRegistry
+}
 
 // GetCoreModules returns the list of core modules to initialize
 // This is the only function that needs to be updated when adding new core modules
@@ -71,10 +78,22 @@ func (cm *CoreModules) GetCoreModules(deps module.Dependencies) map[string]modul
 		deps.Emitter,
 	)
 
+	// Admin template essential modules
+	modules["settings"] = settings.Init(deps)
+	modules["employees"] = employees.Init(deps)
+
+	// Initialize search with registry (can be nil, will create empty registry)
+	modules["search"] = search.Init(deps, cm.SearchRegistry)
+
+	modules["notifications"] = notifications.Init(deps)
+	modules["activities"] = activities.Init(deps)
+
 	return modules
 }
 
 // NewCoreModules creates a new core modules provider
-func NewCoreModules() *CoreModules {
-	return &CoreModules{}
+func NewCoreModules(searchRegistry *search.SearchRegistry) *CoreModules {
+	return &CoreModules{
+		SearchRegistry: searchRegistry,
+	}
 }
