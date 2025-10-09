@@ -216,14 +216,32 @@ func (app *App) setupMiddleware() {
 			if app.config.Middleware.IsLoggingRequired(path) {
 				start := time.Now()
 				err := next(c)
+				status := c.Writer.Status()
+				duration := time.Since(start)
 
-				app.logger.Info("Request",
+				// Log based on status code
+				logFields := []logger.Field{
 					logger.String("method", c.Request.Method),
 					logger.String("path", path),
-					logger.Int("status", c.Writer.Status()),
-					logger.Duration("duration", time.Since(start)),
+					logger.Int("status", status),
+					logger.Duration("duration", duration),
 					logger.String("ip", c.ClientIP()),
-				)
+				}
+
+				// Add error message if present
+				if err != nil {
+					logFields = append(logFields, logger.String("error", err.Error()))
+				}
+
+				// Log as ERROR for 5xx status codes, WARN for 4xx, INFO for others
+				if status >= 500 {
+					app.logger.Error("Request failed", logFields...)
+				} else if status >= 400 {
+					app.logger.Warn("Request", logFields...)
+				} else {
+					app.logger.Info("Request", logFields...)
+				}
+
 				return err
 			}
 
