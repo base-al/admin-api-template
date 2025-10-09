@@ -34,4 +34,5 @@ basecmd
 destroy.sh
 storage/base.db
 test_runner.sh
-swagger/
+swagger/*
+!swagger/index.html
