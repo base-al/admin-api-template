@@ -18,7 +18,7 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 COPY . .
 
 # Generate swagger docs after copying source code
-RUN swag init --parseDependency --parseInternal --parseVendor --parseDepth 1 --generatedTime=false
+RUN swag init --output swagger --parseDependency --parseInternal --parseVendor --parseDepth 1 --generatedTime=false
 
 # Build the application with optimizations for arm64 architecture
 RUN CGO_ENABLED=1 GOARCH=arm64 go build \
@@ -37,7 +37,7 @@ RUN addgroup -g 1001 appgroup && \
     adduser -D -s /bin/sh -u 1001 -G appgroup appuser
 
 # Create necessary directories
-RUN mkdir -p /app/docs /app/logs /app/storage/uploads /app/tmp && \
+RUN mkdir -p /app/swagger /app/logs /app/storage/uploads /app/tmp && \
     chown -R appuser:appgroup /app
 
 # Copy the binary
@@ -46,7 +46,7 @@ RUN chmod +x /app/admin-api && \
     ls -la /app/admin-api
 
 # Copy application files with proper ownership
-COPY --from=build --chown=appuser:appgroup /src/docs/ /app/docs/
+COPY --from=build --chown=appuser:appgroup /src/swagger/ /app/swagger/
 COPY --from=build --chown=appuser:appgroup /src/static/ /app/static/
 
 # Switch to non-root user

@@ -227,7 +227,7 @@ func (app *App) setupMiddleware() {
 func (app *App) setupStaticRoutes() {
 	app.router.Static("/static", "./static")
 	app.router.Static("/storage", "./storage")
-	app.router.Static("/swag", "./docs")
+	app.router.Static("/swagger", "./swagger")
 }
 
 // initWebSocket initializes the WebSocket hub if enabled
@@ -345,12 +345,9 @@ func (app *App) setupRoutes() *App {
 		})
 	})
 
-	// Swagger documentation - redirect /swagger to /swag
+	// Swagger documentation - redirect /swagger root to /swagger/index.html
 	app.router.GET("/swagger", func(c *router.Context) error {
-		return c.Redirect(302, "/swag/index.html")
-	})
-	app.router.GET("/swagger/*any", func(c *router.Context) error {
-		return c.Redirect(302, "/swag/index.html")
+		return c.Redirect(302, "/swagger/index.html")
 	})
 
 	// Check if public directory exists (production with frontend)
@@ -406,7 +403,7 @@ func (app *App) displayServerInfo() *App {
 	fmt.Printf("   • Local:   http://localhost%s\n", port)
 	fmt.Printf("   • Network: http://%s%s\n", localIP, port)
 	fmt.Printf("\n📚 API Documentation:\n")
-	fmt.Printf("   • Swagger: http://localhost%s/swag/\n", port)
+	fmt.Printf("   • Swagger: http://localhost%s/swagger/\n", port)
 	fmt.Printf("\n")
 
 	return app
