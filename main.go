@@ -67,11 +67,20 @@ type App struct {
 
 	// State
 	running bool
+	verbose bool
 }
 
 // New creates a new Base application instance
 func New() *App {
-	return &App{}
+	// Check for verbose flag
+	verbose := false
+	for _, arg := range os.Args {
+		if arg == "-v" || arg == "--verbose" {
+			verbose = true
+			break
+		}
+	}
+	return &App{verbose: verbose}
 }
 
 // Start initializes and starts the application
@@ -117,10 +126,6 @@ func (app *App) initLogger() *App {
 	}
 
 	app.logger = log
-	app.logger.Info("🚀 Starting Base Framework",
-		logger.String("version", app.config.Version),
-		logger.String("environment", app.config.Env))
-
 	return app
 }
 
@@ -133,7 +138,11 @@ func (app *App) initDatabase() *App {
 	}
 
 	app.db = db
-	app.logger.Info("✅ Database initialized")
+
+	if app.verbose {
+		app.logger.Info("Database connected", logger.String("driver", app.config.DBDriver))
+	}
+
 	return app
 }
 
@@ -161,17 +170,21 @@ func (app *App) initInfrastructure() *App {
 	}
 	app.storage = activeStorage
 
+	if app.verbose {
+		app.logger.Info("Storage initialized", logger.String("provider", app.config.StorageProvider))
+	}
+
 	// Initialize email sender (non-fatal)
 	emailSender, err := email.NewSender(app.config)
 	if err != nil {
-		app.logger.Warn("Email sender initialization failed - continuing without email functionality",
-			logger.String("error", err.Error()))
 		app.emailSender = nil
 	} else {
 		app.emailSender = emailSender
+		if app.verbose {
+			app.logger.Info("Email sender initialized")
+		}
 	}
 
-	app.logger.Info("✅ Infrastructure initialized")
 	return app
 }
 
@@ -182,7 +195,10 @@ func (app *App) initRouter() *App {
 	app.setupStaticRoutes()
 	app.initWebSocket()
 
-	app.logger.Info("✅ Router initialized")
+	if app.verbose {
+		app.logger.Info("Router and middleware initialized")
+	}
+
 	return app
 }
 
@@ -233,12 +249,14 @@ func (app *App) setupStaticRoutes() {
 // initWebSocket initializes the WebSocket hub if enabled
 func (app *App) initWebSocket() {
 	if !app.config.WebSocketEnabled {
-		app.logger.Info("⏩ WebSocket disabled via WS_ENABLED=false")
 		return
 	}
 
 	app.wsHub = websocket.InitWebSocketModule(app.router.Group("/api"))
-	app.logger.Info("✅ WebSocket hub initialized")
+
+	if app.verbose {
+		app.logger.Info("WebSocket initialized")
+	}
 }
 
 // autoDiscoverModules automatically discovers and registers modules
@@ -246,7 +264,6 @@ func (app *App) autoDiscoverModules() *App {
 	app.registerCoreModules()
 	app.discoverAndRegisterAppModules()
 
-	app.logger.Info("✅ Modules auto-discovered and registered")
 	return app
 }
 
@@ -263,8 +280,6 @@ func (app *App) setupAuthorizationMiddleware() {
 			return next(c)
 		}
 	})
-
-	app.logger.Info("✅ Authorization service middleware injected globally")
 }
 
 // registerCoreModules registers core framework modules
@@ -293,7 +308,9 @@ func (app *App) registerCoreModules() {
 		app.logger.Error("Failed to initialize core modules", logger.String("error", err.Error()))
 	}
 
-	app.logger.Info("✅ Core modules registered", logger.Int("count", len(initialized)))
+	if app.verbose {
+		app.logger.Info("Core modules registered", logger.Int("count", len(initialized)))
+	}
 
 	// Add authorization service injection middleware globally
 	app.setupAuthorizationMiddleware()
@@ -317,11 +334,9 @@ func (app *App) discoverAndRegisterAppModules() {
 	modules := appProvider.GetAppModules(deps)
 
 	if len(modules) == 0 {
-		app.logger.Info("No app modules found")
 		return
 	}
 
-	app.logger.Info("✅ App modules loaded", logger.Int("count", len(modules)))
 	app.initializeModules(modules, deps)
 }
 
@@ -330,9 +345,11 @@ func (app *App) initializeModules(modules map[string]module.Module, deps module.
 	initializer := module.NewInitializer(app.logger)
 	initializedModules := initializer.Initialize(modules, deps)
 
-	app.logger.Info("✅ Module initialization complete",
-		logger.Int("total", len(modules)),
-		logger.Int("initialized", len(initializedModules)))
+	if app.verbose {
+		app.logger.Info("App modules initialized",
+			logger.Int("total", len(modules)),
+			logger.Int("initialized", len(initializedModules)))
+	}
 }
 
 // setupRoutes sets up basic system routes
@@ -398,13 +415,12 @@ func (app *App) displayServerInfo() *App {
 	localIP := app.getLocalIP()
 	port := app.config.ServerPort
 
-	fmt.Printf("\n🎉 Base Framework Ready!\n\n")
-	fmt.Printf("📍 Server URLs:\n")
-	fmt.Printf("   • Local:   http://localhost%s\n", port)
-	fmt.Printf("   • Network: http://%s%s\n", localIP, port)
-	fmt.Printf("\n📚 API Documentation:\n")
-	fmt.Printf("   • Swagger: http://localhost%s/swagger/\n", port)
-	fmt.Printf("\n")
+	fmt.Printf("\n\033[1;32mBase Framework Ready!\033[0m\n\n")
+	fmt.Printf("\033[36mServer URLs:\033[0m\n")
+	fmt.Printf("  Local:   http://localhost%s\n", port)
+	fmt.Printf("  Network: http://%s%s\n\n", localIP, port)
+	fmt.Printf("\033[36mAPI Documentation:\033[0m\n")
+	fmt.Printf("  Swagger: http://localhost%s/swagger/\n\n", port)
 
 	return app
 }
@@ -431,20 +447,21 @@ func (app *App) run() error {
 	app.running = true
 	port := app.config.ServerPort
 
-	app.logger.Info("🌐 Server starting",
-		logger.String("port", port))
+	if app.verbose {
+		app.logger.Info("Server starting", logger.String("port", port))
+	}
 
 	err := app.router.Run(port)
 	if err != nil {
 		// Check if it's an "address already in use" error
 		if strings.Contains(err.Error(), "bind: address already in use") {
-			app.logger.Error("❌ Server failed to start - Port already in use",
+			app.logger.Error("Server failed to start - Port already in use",
 				logger.String("port", port),
 				logger.String("error", err.Error()))
 			return fmt.Errorf("port %s is already in use. Please:\n  • Stop any other servers running on this port\n  • Change the SERVER_PORT in your .env file\n  • Use a different port with: export SERVER_PORT=:8101", port)
 		}
 		// For other network errors, provide a generic helpful message
-		app.logger.Error("❌ Server failed to start",
+		app.logger.Error("Server failed to start",
 			logger.String("error", err.Error()))
 		return fmt.Errorf("server failed to start: %w", err)
 	}
@@ -457,20 +474,19 @@ func (app *App) Stop() error {
 		return nil
 	}
 
-	app.logger.Info("🛑 Shutting down gracefully...")
+	app.logger.Info("Shutting down gracefully...")
 	app.running = false
 	return nil
 }
 
 func main() {
-
 	// Initialize the Base application
 	app := New()
 
 	// Normal application startup
 	if err := app.Start(); err != nil {
 		// Print user-friendly error message instead of panicking
-		fmt.Printf("\n❌ Application failed to start:\n%v\n\n", err)
+		fmt.Printf("\n\033[31mApplication failed to start:\033[0m\n%v\n\n", err)
 		os.Exit(1)
 	}
 }
