@@ -24,13 +24,13 @@ func NewActivityController(service *ActivityService, storage *storage.ActiveStor
 
 func (c *ActivityController) Routes(router *router.RouterGroup) {
 	// Main CRUD endpoints - specific routes MUST come before parameterized routes
-	router.GET("/activities", c.List)          // Paginated list
-	router.POST("/activities", c.Create)       // Create
-	router.GET("/activities/all", c.ListAll)   // Unpaginated list - MUST be before /:id
+	router.GET("/activities", c.List)             // Paginated list
+	router.POST("/activities", c.Create)          // Create
+	router.GET("/activities/all", c.ListAll)      // Unpaginated list - MUST be before /:id
 	router.GET("/activities/recent", c.GetRecent) // Get recent activities - MUST be before /:id
-	router.GET("/activities/:id", c.Get)       // Get by ID - MUST be after /all
-	router.PUT("/activities/:id", c.Update)    // Update
-	router.DELETE("/activities/:id", c.Delete) // Delete
+	router.GET("/activities/:id", c.Get)          // Get by ID - MUST be after /all
+	router.PUT("/activities/:id", c.Update)       // Update
+	router.DELETE("/activities/:id", c.Delete)    // Delete
 
 	//Upload endpoints for each file field
 }
@@ -38,7 +38,7 @@ func (c *ActivityController) Routes(router *router.RouterGroup) {
 // CreateActivity godoc
 // @Summary Create a new Activity
 // @Description Create a new Activity with the input payload
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -65,7 +65,7 @@ func (c *ActivityController) Create(ctx *router.Context) error {
 // GetActivity godoc
 // @Summary Get a Activity
 // @Description Get a Activity by its id
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -92,7 +92,7 @@ func (c *ActivityController) Get(ctx *router.Context) error {
 // ListActivities godoc
 // @Summary List activities
 // @Description Get a list of activities
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -151,7 +151,7 @@ func (c *ActivityController) List(ctx *router.Context) error {
 // ListAllActivities godoc
 // @Summary List all activities for select options
 // @Description Get a simplified list of all activities with id and name only (for dropdowns/select boxes)
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -177,7 +177,7 @@ func (c *ActivityController) ListAll(ctx *router.Context) error {
 // UpdateActivity godoc
 // @Summary Update a Activity
 // @Description Update a Activity by its id
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -214,7 +214,7 @@ func (c *ActivityController) Update(ctx *router.Context) error {
 // DeleteActivity godoc
 // @Summary Delete a Activity
 // @Description Delete a Activity by its id
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -244,7 +244,7 @@ func (c *ActivityController) Delete(ctx *router.Context) error {
 // GetRecent godoc
 // @Summary Get recent activities
 // @Description Get the most recent activities
-// @Tags App/Activity
+// @Tags Core/Activity
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json

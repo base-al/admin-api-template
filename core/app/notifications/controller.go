@@ -37,7 +37,7 @@ func (c *NotificationController) Routes(router *router.RouterGroup) {
 // CreateNotification godoc
 // @Summary Create a new Notification
 // @Description Create a new Notification with the input payload
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -64,7 +64,7 @@ func (c *NotificationController) Create(ctx *router.Context) error {
 // GetNotification godoc
 // @Summary Get a Notification
 // @Description Get a Notification by its id
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -91,7 +91,7 @@ func (c *NotificationController) Get(ctx *router.Context) error {
 // ListNotifications godoc
 // @Summary List notifications
 // @Description Get a list of notifications
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -150,7 +150,7 @@ func (c *NotificationController) List(ctx *router.Context) error {
 // ListAllNotifications godoc
 // @Summary List all notifications for select options
 // @Description Get a simplified list of all notifications with id and name only (for dropdowns/select boxes)
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -176,7 +176,7 @@ func (c *NotificationController) ListAll(ctx *router.Context) error {
 // UpdateNotification godoc
 // @Summary Update a Notification
 // @Description Update a Notification by its id
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -213,7 +213,7 @@ func (c *NotificationController) Update(ctx *router.Context) error {
 // DeleteNotification godoc
 // @Summary Delete a Notification
 // @Description Delete a Notification by its id
-// @Tags App/Notification
+// @Tags Core/Notification
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json

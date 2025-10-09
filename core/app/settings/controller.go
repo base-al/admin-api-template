@@ -37,7 +37,7 @@ func (c *SettingsController) Routes(router *router.RouterGroup) {
 // CreateSettings godoc
 // @Summary Create a new Settings
 // @Description Create a new Settings with the input payload
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -64,7 +64,7 @@ func (c *SettingsController) Create(ctx *router.Context) error {
 // GetSettings godoc
 // @Summary Get a Settings
 // @Description Get a Settings by its id
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -91,7 +91,7 @@ func (c *SettingsController) Get(ctx *router.Context) error {
 // ListSettings godoc
 // @Summary List settings
 // @Description Get a list of settings
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -150,7 +150,7 @@ func (c *SettingsController) List(ctx *router.Context) error {
 // ListAllSettings godoc
 // @Summary List all settings for select options
 // @Description Get a simplified list of all settings with id and name only (for dropdowns/select boxes)
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -176,7 +176,7 @@ func (c *SettingsController) ListAll(ctx *router.Context) error {
 // UpdateSettings godoc
 // @Summary Update a Settings
 // @Description Update a Settings by its id
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
@@ -213,7 +213,7 @@ func (c *SettingsController) Update(ctx *router.Context) error {
 // DeleteSettings godoc
 // @Summary Delete a Settings
 // @Description Delete a Settings by its id
-// @Tags App/Settings
+// @Tags Core/Settings
 // @Security ApiKeyAuth
 // @Security BearerAuth
 // @Accept json
