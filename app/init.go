@@ -4,7 +4,11 @@ import (
 	"base/core/app/profile"
 	"base/core/app/search"
 	"base/core/database"
+	"base/core/logger"
 	"base/core/module"
+	"base/core/scheduler"
+
+	"gorm.io/gorm"
 )
 
 // AppModules implements module.AppModuleProvider interface
@@ -186,4 +190,55 @@ func GetSearchRegistry() *search.SearchRegistry {
 	// })
 
 	return registry
+}
+
+/*
+SetupScheduler registers all scheduled jobs with the cron scheduler.
+
+Register your scheduled jobs here:
+
+	scheduler := scheduler.NewCronScheduler(logger)
+
+	// Example: Daily job at 9:00 AM
+	scheduler.RegisterTask(&scheduler.CronTask{
+		Name:        "cleanup_old_records",
+		Description: "Clean up records older than 30 days",
+		CronExpr:    "0 9 * * *",
+		Handler: func(ctx context.Context) error {
+			// Your job logic here
+			return nil
+		},
+		Enabled: true,
+	})
+
+	return scheduler
+
+See core/scheduler documentation for cron expression format.
+*/
+func SetupScheduler(db *gorm.DB, logger logger.Logger) *scheduler.CronScheduler {
+	cronScheduler := scheduler.NewCronScheduler(logger)
+
+	// Register your scheduled jobs here
+	// Example:
+	/*
+		cronTask := &scheduler.CronTask{
+			Name:        "daily_report",
+			Description: "Generate daily reports",
+			CronExpr:    "0 9 * * *", // Daily at 9:00 AM
+			Handler: func(ctx context.Context) error {
+				// Your job logic here
+				return nil
+			},
+			Enabled: true,
+		}
+
+		err := cronScheduler.RegisterTask(cronTask)
+		if err != nil {
+			logger.Error("failed to register daily report job")
+		} else {
+			logger.Info("registered daily report job")
+		}
+	*/
+
+	return cronScheduler
 }

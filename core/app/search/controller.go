@@ -38,7 +38,7 @@ func (c *SearchController) Routes(router *router.RouterGroup) {
 // @Param q query string true "Search query (minimum 2 characters)" example("john")
 // @Param modules query string false "Comma-separated modules to search" example("customer,employee,business_customer")
 // @Param limit query int false "Results per module (default: 10)" example(20)
-// @Success 200 {object} models.SearchResponse
+// @Success 200 {object} search.SearchResponse
 // @Failure 400 {object} types.ErrorResponse
 // @Failure 500 {object} types.ErrorResponse
 // @Router /search [get]
