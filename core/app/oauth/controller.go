@@ -34,7 +34,7 @@ func (c *OAuthController) Routes(router *router.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param idToken body string true "Google Id Token"
-// @Success 200 {object} profile.UserResponse
+// @Success 200 {object} users.UserResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /oauth/google/callback [post]
@@ -68,7 +68,7 @@ func (c *OAuthController) GoogleCallback(ctx *router.Context) error {
 // @Accept json
 // @Produce json
 // @Param accessToken body string true "Facebook Access Token"
-// @Success 200 {object} profile.UserResponse
+// @Success 200 {object} users.UserResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /oauth/facebook/callback [post]
@@ -102,7 +102,7 @@ func (c *OAuthController) FacebookCallback(ctx *router.Context) error {
 // @Accept json
 // @Produce json
 // @Param idToken body string true "Apple Id Token"
-// @Success 200 {object} profile.UserResponse
+// @Success 200 {object} users.UserResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /oauth/apple/callback [post]

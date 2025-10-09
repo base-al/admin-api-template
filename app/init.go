@@ -1,8 +1,8 @@
 package app
 
 import (
-	"base/core/app/profile"
 	"base/core/app/search"
+	"base/core/app/users"
 	"base/core/database"
 	"base/core/logger"
 	"base/core/module"
@@ -113,7 +113,7 @@ func Extend(user_id uint) any {
 	}
 
 	// Get user's role from the database with role relationship preloaded
-	var user profile.User
+	var user users.User
 	if err := database.DB.Preload("Role").Where("id = ?", user_id).First(&user).Error; err != nil {
 		// If user not found, return minimal context
 		return map[string]any{

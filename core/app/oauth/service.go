@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"base/core/app/profile"
+	"base/core/app/users"
 	"base/core/storage"
 	"bytes"
 	"context"
@@ -130,7 +130,7 @@ func (s *OAuthService) processUser(email, name, username, pictureURL, provider, 
 		if err == gorm.ErrRecordNotFound {
 			// Create new user
 			user = OAuthUser{
-				User: profile.User{
+				User: users.User{
 					Email:     email,
 					FirstName: name[:strings.Index(name, " ")],
 					LastName:  name[strings.Index(name, " ")+1:],
@@ -262,7 +262,7 @@ func (s *OAuthService) generateUniqueUsername(baseUsername string) string {
 	username := baseUsername
 	counter := 1
 	for {
-		var existingUser profile.User
+		var existingUser users.User
 		if s.DB.Where("username = ?", username).First(&existingUser).Error == gorm.ErrRecordNotFound {
 			break
 		}

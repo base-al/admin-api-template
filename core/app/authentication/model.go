@@ -1,12 +1,12 @@
 package authentication
 
 import (
-	"base/core/app/profile"
+	"base/core/app/users"
 	"time"
 )
 
 type AuthUser struct {
-	profile.User     `gorm:"embedded"`
+	users.User     `gorm:"embedded"`
 	LastLogin        *time.Time `gorm:"column:last_login"`
 	ResetToken       string     `gorm:"column:reset_token"`
 	ResetTokenExpiry *time.Time `gorm:"column:reset_token_expiry"`
@@ -60,7 +60,7 @@ type ResetPasswordRequest struct {
 }
 
 type AuthResponse struct {
-	profile.UserResponse
+	users.UserResponse
 	AccessToken string `json:"accessToken"`
 	Exp         int64  `json:"exp"`
 	Extend      any    `json:"extend,omitempty"`

@@ -1,4 +1,4 @@
-package employees
+package users
 
 import (
 	"errors"
@@ -13,15 +13,15 @@ import (
 type Module struct {
 	module.DefaultModule
 	DB         *gorm.DB
-	Service    *EmployeeService
-	Controller *EmployeeController
+	Service    *UserService
+	Controller *UserController
 }
 
-// Init creates and initializes the Employee module with all dependencies
+// Init creates and initializes the User module with all dependencies
 func Init(deps module.Dependencies) module.Module {
 	// Initialize service and controller
-	service := NewEmployeeService(deps.DB, deps.Emitter, deps.Storage, deps.Logger)
-	controller := NewEmployeeController(service, deps.Storage)
+	service := NewUserService(deps.DB, deps.Emitter, deps.Storage, deps.Logger)
+	controller := NewUserController(service, deps.Storage, deps.Logger)
 
 	// Create module
 	mod := &Module{
@@ -43,7 +43,7 @@ func (m *Module) Init() error {
 }
 
 func (m *Module) Migrate() error {
-	err := m.DB.AutoMigrate(&Employee{})
+	err := m.DB.AutoMigrate(&User{})
 	if err != nil {
 		return err
 	}
@@ -57,54 +57,51 @@ func (m *Module) SeedPermissions() error {
 		return err
 	}
 
-	// Define permissions based on actual controller endpoints:
-	// GET /employees (List), POST /employees (Create), GET /employees/all (ListAll)
-	// GET /employees/:id (Get), PUT /employees/:id (Update), DELETE /employees/:id (Delete)
-
-	employeePermissions := []authorization.Permission{
+	// Define permissions for user management endpoints (admin only)
+	userPermissions := []authorization.Permission{
 		{
-			Name:         "employee list",
-			Description:  "View employee list (paginated)",
-			ResourceType: "employee",
+			Name:         "user list",
+			Description:  "View user list (paginated)",
+			ResourceType: "user",
 			Action:       "list",
 		},
 		{
-			Name:         "employee list_all",
-			Description:  "View all employees (unpaginated)",
-			ResourceType: "employee",
+			Name:         "user list_all",
+			Description:  "View all users (unpaginated)",
+			ResourceType: "user",
 			Action:       "list_all",
 		},
 		{
-			Name:         "employee read",
-			Description:  "View employee details",
-			ResourceType: "employee",
+			Name:         "user read",
+			Description:  "View user details",
+			ResourceType: "user",
 			Action:       "read",
 		},
 		{
-			Name:         "employee create",
-			Description:  "Create new employees",
-			ResourceType: "employee",
+			Name:         "user create",
+			Description:  "Create new users",
+			ResourceType: "user",
 			Action:       "create",
 		},
 		{
-			Name:         "employee update",
-			Description:  "Update employee information",
-			ResourceType: "employee",
+			Name:         "user update",
+			Description:  "Update user information",
+			ResourceType: "user",
 			Action:       "update",
 		},
 		{
-			Name:         "employee delete",
-			Description:  "Delete employees",
-			ResourceType: "employee",
+			Name:         "user delete",
+			Description:  "Delete users",
+			ResourceType: "user",
 			Action:       "delete",
 		},
 	}
 
 	// Upsert permissions - create or update if they exist
-	for _, permission := range employeePermissions {
+	for _, permission := range userPermissions {
 		var existingPermission authorization.Permission
 		result := m.DB.Where("resource_type = ? AND action = ?", permission.ResourceType, permission.Action).First(&existingPermission)
-		
+
 		if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// Create new permission
 			if err := m.DB.Create(&permission).Error; err != nil {
@@ -128,6 +125,6 @@ func (m *Module) SeedPermissions() error {
 
 func (m *Module) GetModels() []any {
 	return []any{
-		&Employee{},
+		&User{},
 	}
 }

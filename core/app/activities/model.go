@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"base/core/app/profile"
+	"base/core/app/users"
 )
 
 // Activity represents an audit log entry tracking system actions
@@ -19,7 +19,7 @@ type Activity struct {
 
 	// User who performed the action
 	UserId uint          `json:"user_id" gorm:"index"` // Indexed for filtering by user
-	User   *profile.User `json:"user,omitempty" gorm:"foreignKey:UserId"`
+	User   *users.User `json:"user,omitempty" gorm:"foreignKey:UserId"`
 
 	// Entity being acted upon (e.g., "post", "employee", "order")
 	EntityType string `json:"entity_type" gorm:"index"` // Indexed for filtering by entity
@@ -85,7 +85,7 @@ type ActivityResponse struct {
 	UpdatedAt   time.Time                  `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt             `json:"deleted_at"`
 	UserId      uint                       `json:"user_id"`
-	User        *profile.UserModelResponse `json:"user,omitempty"`
+	User        *users.UserModelResponse `json:"user,omitempty"`
 	EntityType  string                     `json:"entity_type"`
 	EntityId    uint                       `json:"entity_id"`
 	Action      string                     `json:"action"`

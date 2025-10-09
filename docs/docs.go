@@ -2693,7 +2693,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.UserResponse"
+                            "$ref": "#/definitions/users.UserResponse"
                         }
                     },
                     "400": {
@@ -2744,7 +2744,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.UserResponse"
+                            "$ref": "#/definitions/users.UserResponse"
                         }
                     },
                     "400": {
@@ -2795,7 +2795,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.UserResponse"
+                            "$ref": "#/definitions/users.UserResponse"
                         }
                     },
                     "400": {
@@ -2838,7 +2838,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.User"
+                            "$ref": "#/definitions/users.User"
                         }
                     },
                     "400": {
@@ -2896,7 +2896,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.User"
+                            "$ref": "#/definitions/users.User"
                         }
                     },
                     "400": {
@@ -2954,7 +2954,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.User"
+                            "$ref": "#/definitions/users.User"
                         }
                     },
                     "400": {
@@ -3014,7 +3014,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/profile.User"
+                            "$ref": "#/definitions/users.User"
                         }
                     },
                     "400": {
@@ -4515,7 +4515,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/profile.UserModelResponse"
+                    "$ref": "#/definitions/users.UserModelResponse"
                 },
                 "user_agent": {
                     "type": "string"
@@ -5040,7 +5040,7 @@ const docTemplate = `{
                 }
             }
         },
-        "profile.User": {
+        "users.User": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -5087,7 +5087,7 @@ const docTemplate = `{
                 }
             }
         },
-        "profile.UserModelResponse": {
+        "users.UserModelResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -5110,7 +5110,7 @@ const docTemplate = `{
                 }
             }
         },
-        "profile.UserResponse": {
+        "users.UserResponse": {
             "type": "object",
             "properties": {
                 "avatar_url": {

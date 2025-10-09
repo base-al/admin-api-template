@@ -1,4 +1,4 @@
-package employees
+package users
 
 import (
 	"base/core/validator"
@@ -7,8 +7,8 @@ import (
 // Global validator instance using Base core validator wrapper
 var validate = validator.New()
 
-// ValidateEmployeeCreateRequest validates the create request
-func ValidateEmployeeCreateRequest(req *CreateEmployeeRequest) error {
+// ValidateUserCreateRequest validates the create request
+func ValidateUserCreateRequest(req *CreateUserRequest) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -24,8 +24,8 @@ func ValidateEmployeeCreateRequest(req *CreateEmployeeRequest) error {
 	return validate.Validate(req)
 }
 
-// ValidateEmployeeUpdateRequest validates the update request
-func ValidateEmployeeUpdateRequest(req *UpdateEmployeeRequest, id uint) error {
+// ValidateUserUpdateRequest validates the update request
+func ValidateUserUpdateRequest(req *UpdateUserRequest, id uint) error {
 	if req == nil {
 		return validator.ValidationErrors{
 			{
@@ -52,8 +52,8 @@ func ValidateEmployeeUpdateRequest(req *UpdateEmployeeRequest, id uint) error {
 	return nil
 }
 
-// ValidateEmployeeDeleteRequest validates the delete request
-func ValidateEmployeeDeleteRequest(id uint) error {
+// ValidateUserDeleteRequest validates the delete request
+func ValidateUserDeleteRequest(id uint) error {
 	return ValidateID(id)
 }
 

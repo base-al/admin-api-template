@@ -4,13 +4,12 @@ import (
 	"base/core/app/activities"
 	"base/core/app/authentication"
 	"base/core/app/authorization"
-	"base/core/app/employees"
 	"base/core/app/media"
 	"base/core/app/notifications"
 	"base/core/app/oauth"
-	"base/core/app/profile"
 	"base/core/app/search"
 	"base/core/app/settings"
+	"base/core/app/users"
 	"base/core/module"
 	"base/core/scheduler"
 	"base/core/translation"
@@ -27,13 +26,6 @@ func (cm *CoreModules) GetCoreModules(deps module.Dependencies) map[string]modul
 	modules := make(map[string]module.Module)
 
 	// Core modules - essential system functionality
-	modules["users"] = profile.NewUserModule(
-		deps.DB,
-		deps.Router,
-		deps.Logger,
-		deps.Storage,
-	)
-
 	modules["media"] = media.NewMediaModule(
 		deps.DB,
 		deps.Router,
@@ -80,7 +72,7 @@ func (cm *CoreModules) GetCoreModules(deps module.Dependencies) map[string]modul
 
 	// Admin template essential modules
 	modules["settings"] = settings.Init(deps)
-	modules["employees"] = employees.Init(deps)
+	modules["users"] = users.Init(deps) // Merged profile + employees management
 
 	// Initialize search with registry (can be nil, will create empty registry)
 	modules["search"] = search.Init(deps, cm.SearchRegistry)

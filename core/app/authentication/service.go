@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"base/app"
-	"base/core/app/profile"
+	"base/core/app/users"
 	"base/core/email"
 	"base/core/emitter"
 	"base/core/types"
@@ -78,7 +78,7 @@ func (s *AuthService) Register(req *RegisterRequest) (*AuthResponse, error) {
 	now := time.Now()
 
 	user := AuthUser{
-		User: profile.User{
+		User: users.User{
 			Email:     req.Email,
 			Password:  string(hashedPassword),
 			FirstName: req.FirstName,
@@ -139,7 +139,7 @@ func (s *AuthService) Register(req *RegisterRequest) (*AuthResponse, error) {
 	// 	}
 	// }()
 
-	userResponse := profile.ToResponse(&user.User)
+	userResponse := user.User.ToResponse()
 	userResponse.LastLogin = now.Format(time.RFC3339)
 
 	return &AuthResponse{
@@ -174,7 +174,7 @@ func (s *AuthService) Login(req *LoginRequest) (*AuthResponse, error) {
 	}
 
 	// Create the response
-	userResponse := profile.ToResponse(&user.User)
+	userResponse := user.User.ToResponse()
 	if user.LastLogin != nil {
 		userResponse.LastLogin = user.LastLogin.Format(time.RFC3339)
 	}
