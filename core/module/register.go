@@ -69,7 +69,6 @@ func RegisterModule(name string, module Module) error {
 		return fmt.Errorf("error: Module already registered: %s", name)
 	}
 	modulesRegistry[name] = module
-	fmt.Printf("Successfully registered module: %s\n", name)
 	return nil
 }
 
@@ -106,7 +105,6 @@ func RegisterAppModule(name string, factory ModuleFactory) {
 	globalMu.Lock()
 	defer globalMu.Unlock()
 	globalAppModules[name] = factory
-	fmt.Printf("Successfully registered app module factory: %s\n", name)
 }
 
 // GetAppModule retrieves a registered module factory

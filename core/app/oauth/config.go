@@ -1,7 +1,6 @@
 package oauth
 
 import (
-	"log"
 	"os"
 )
 
@@ -19,7 +18,6 @@ type ProviderConfig struct {
 }
 
 func LoadConfig() *OAuthConfig {
-	log.Println("Loading OAuth configuration")
 	config := &OAuthConfig{
 		Google: ProviderConfig{
 			ClientId:     os.Getenv("GOOGLE_CLIENT_Id"),
@@ -38,36 +36,26 @@ func LoadConfig() *OAuthConfig {
 		},
 		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
-	log.Println("OAuth configuration loaded successfully")
 	return config
 }
 
 func ValidateConfig(config *OAuthConfig) {
-	log.Println("Validating OAuth configuration")
-
 	// Check if at least one provider is configured
 	hasProvider := false
 	if config.Google.ClientId != "" && config.Google.ClientSecret != "" {
 		hasProvider = true
-		log.Println("Google OAuth provider configured")
 	}
 	if config.Facebook.ClientId != "" && config.Facebook.ClientSecret != "" {
 		hasProvider = true
-		log.Println("Facebook OAuth provider configured")
 	}
 	if config.Apple.ClientId != "" && config.Apple.ClientSecret != "" {
 		hasProvider = true
-		log.Println("Apple OAuth provider configured")
-	}
-
-	if !hasProvider {
-		log.Println("Warning: No OAuth providers configured. OAuth functionality will be disabled.")
 	}
 
 	if config.JWTSecret == "" {
-		log.Println("Warning: JWT Secret not configured. Using default for development.")
 		config.JWTSecret = "default-jwt-secret-for-development"
 	}
 
-	log.Println("OAuth configuration validated successfully")
+	// Silently handle unonfigured OAuth - not critical
+	_ = hasProvider
 }

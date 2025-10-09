@@ -369,7 +369,9 @@ func (app *App) setupRoutes() *App {
 
 	// Check if public directory exists (production with frontend)
 	if _, err := os.Stat("./public"); err == nil {
-		app.logger.Info("✅ Serving frontend from ./public")
+		if app.verbose {
+			app.logger.Info("Serving frontend from ./public")
+		}
 
 		// Serve frontend assets (/_nuxt, /_fonts, etc.)
 		app.router.GET("/_nuxt/*filepath", func(c *router.Context) error {

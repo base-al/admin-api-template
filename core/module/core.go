@@ -1,8 +1,6 @@
 package module
 
 import (
-	"fmt"
-
 	"base/core/logger"
 	"base/core/router"
 )
@@ -28,20 +26,16 @@ func NewCoreOrchestrator(initializer *Initializer, provider CoreModuleProvider) 
 
 // InitializeCoreModules initializes all core modules using the provider
 func (co *CoreOrchestrator) InitializeCoreModules(deps Dependencies) ([]Module, error) {
-	deps.Logger.Info("🏗️  Starting core modules initialization")
-
 	// Get the modules from the provider (from core/app/init.go)
 	modules := co.provider.GetCoreModules(deps)
 
 	if len(modules) == 0 {
-		deps.Logger.Info("No core modules to initialize")
 		return []Module{}, nil
 	}
 
 	// Initialize them using a custom core initializer that handles auth routing
 	initializedModules := co.initializeCoreModules(modules, deps)
 
-	deps.Logger.Info(fmt.Sprintf("✅ Core modules initialization complete (%d modules)", len(initializedModules)))
 	return initializedModules, nil
 }
 
@@ -50,8 +44,6 @@ func (co *CoreOrchestrator) initializeCoreModules(modules map[string]Module, dep
 	var initializedModules []Module
 
 	for name, mod := range modules {
-		deps.Logger.Info("Initializing core module", logger.String("module", name))
-
 		// Register module
 		if err := RegisterModule(name, mod); err != nil {
 			deps.Logger.Error("Failed to register core module",
@@ -86,7 +78,6 @@ func (co *CoreOrchestrator) initializeCoreModules(modules map[string]Module, dep
 		}
 
 		initializedModules = append(initializedModules, mod)
-		deps.Logger.Info("Core module initialized successfully", logger.String("module", name))
 	}
 
 	return initializedModules
