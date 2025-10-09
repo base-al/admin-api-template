@@ -6,7 +6,7 @@ import (
 )
 
 type AuthUser struct {
-	users.User     `gorm:"embedded"`
+	users.User       `gorm:"embedded"`
 	LastLogin        *time.Time `gorm:"column:last_login"`
 	ResetToken       string     `gorm:"column:reset_token"`
 	ResetTokenExpiry *time.Time `gorm:"column:reset_token_expiry"`
@@ -36,27 +36,27 @@ type RegisterRequest struct {
 	// @Description User's phone number
 	Phone string `json:"phone" example:"+1234567890" gorm:"column:phone"`
 	// @Description User's email address
-	Email string `json:"email" binding:"required,email" example:"john@example.com"`
+	Email string `json:"email" binding:"required,email" example:"admin@admin.com"`
 	// @Description Password for the account (minimum 8 characters)
-	Password string `json:"password" binding:"required,min=8" example:"password123"`
+	Password string `json:"password" binding:"required,min=8" example:"admin123"`
 }
 
 // LoginRequest represents the payload for user login
 // @Description Login request payload
 // @name LoginRequest
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email" example:"john@example.com"`
-	Password string `json:"password" binding:"required" example:"password123"`
+	Email    string `json:"email" binding:"required,email" example:"admin@admin.com"`
+	Password string `json:"password" binding:"required" example:"admin123"`
 }
 
 type ForgotPasswordRequest struct {
-	Email string `json:"email" binding:"required,email" example:"john@example.com"`
+	Email string `json:"email" binding:"required,email" example:"admin@admin.com"`
 }
 
 type ResetPasswordRequest struct {
-	Email       string `json:"email" binding:"required,email" example:"john@example.com"`
+	Email       string `json:"email" binding:"required,email" example:"admin@admin.com"`
 	Token       string `json:"token" binding:"required"`
-	NewPassword string `json:"new_password" binding:"required,min=6" example:"newpassword123"`
+	NewPassword string `json:"new_password" binding:"required,min=6" example:"admin123"`
 }
 
 type AuthResponse struct {
